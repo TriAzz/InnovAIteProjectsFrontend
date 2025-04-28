@@ -42,15 +42,7 @@ const Dashboard = () => {
 
   // Load projects on initial load and navigation
   useEffect(() => {
-    console.log('Dashboard mounted or navigation changed - loading projects with default filters');
-    
-    // Reset filters when first loading or navigating back to the page
-    updateFilters({
-      search: '',
-      status: '',
-      category: '',
-      technology: ''
-    });
+    console.log('Dashboard mounted or navigation changed - loading projects');
     
     // Reset local filters to match default values
     setLocalFilters({
@@ -60,12 +52,13 @@ const Dashboard = () => {
       technology: 'All'
     });
     
-    // Force fetch projects immediately
+    // Just fetch projects without resetting filters in context
+    // This ensures we don't interfere with any existing filters
     fetchProjects(true);
     
     // Remove any navigation flags
     sessionStorage.removeItem('dashboard_needs_refresh');
-  }, [location.pathname, updateFilters, fetchProjects]);
+  }, [location.pathname, fetchProjects]);
 
   // Update local filters when context filters change
   useEffect(() => {
@@ -82,7 +75,7 @@ const Dashboard = () => {
         technology: filters.technology ? filters.technology : 'All'
       });
     }
-  }, [filters]);
+  }, [filters, localFilters]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
