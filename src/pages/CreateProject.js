@@ -18,14 +18,13 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useProjects } from '../context/ProjectContext';
 
-const categories = ['Hobby Projects', 'InnovAIte Tools', 'Research', 'Other'];
+// Updated categories to match backend schema
+const categories = ['Web Development', 'Mobile Development', 'Data Science', 'Machine Learning', 'UI/UX Design', 'DevOps', 'Research', 'Other'];
 const statusOptions = ['Not Started', 'In Progress', 'Completed'];
-const technologyOptions = ['React', 'Node.js', 'MongoDB', 'Express', 'Django', 'Python', 'Java', 'Windsurf', 'Other'];
+// Changed to Tools with new options
+const toolOptions = ['Bolt', 'v0 (Vercel)', 'Cursor', 'Replit', 'Lovable', 'Windsurf', 'Tempo Labs', 'Fynix', 'GitHub CoPilot', 'Augment'];
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -45,9 +44,9 @@ const CreateProject = () => {
     githubLink: '',
     category: '',
     status: 'Not Started',
-    technologies: [],
+    technologies: [], // We'll keep the field name the same but use for tools
     tags: '',
-    deadline: null
+    deadline: new Date() // Default to today's date since it's required by the backend
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -67,13 +66,14 @@ const CreateProject = () => {
       newErrors.description = 'Description is required';
     }
     
-    if (formData.githubLink && 
-        !/^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+/.test(formData.githubLink)) {
-      newErrors.githubLink = 'Please enter a valid GitHub repository URL';
-    }
+    // Removed githubLink validation
     
     if (!formData.category) {
       newErrors.category = 'Please select a category';
+    }
+
+    if (formData.technologies.length === 0) {
+      newErrors.technologies = 'Please select at least one tool';
     }
     
     setErrors(newErrors);
@@ -96,25 +96,26 @@ const CreateProject = () => {
     }
   };
 
-  const handleTechChange = (event) => {
+  const handleToolChange = (event) => {
     const { value } = event.target;
     setFormData(prev => ({
       ...prev,
       technologies: typeof value === 'string' ? value.split(',') : value,
     }));
+    
+    // Clear error when field is edited
+    if (errors.technologies) {
+      setErrors(prev => ({
+        ...prev,
+        technologies: ''
+      }));
+    }
   };
 
   const handleTagsChange = (e) => {
     setFormData(prev => ({
       ...prev,
       tags: e.target.value
-    }));
-  };
-
-  const handleDateChange = (newDate) => {
-    setFormData(prev => ({
-      ...prev,
-      deadline: newDate
     }));
   };
 
@@ -254,15 +255,15 @@ const CreateProject = () => {
             </Grid>
             
             <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel id="technologies-label">Technologies</InputLabel>
+              <FormControl fullWidth required error={!!errors.technologies}>
+                <InputLabel id="technologies-label">Tools</InputLabel>
                 <Select
                   labelId="technologies-label"
                   id="technologies"
                   multiple
                   value={formData.technologies}
-                  onChange={handleTechChange}
-                  input={<OutlinedInput id="select-technologies" label="Technologies" />}
+                  onChange={handleToolChange}
+                  input={<OutlinedInput id="select-technologies" label="Tools" />}
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {selected.map((value) => (
@@ -272,13 +273,15 @@ const CreateProject = () => {
                   )}
                   MenuProps={MenuProps}
                 >
-                  {technologyOptions.map((tech) => (
-                    <MenuItem key={tech} value={tech}>
-                      {tech}
+                  {toolOptions.map((tool) => (
+                    <MenuItem key={tool} value={tool}>
+                      {tool}
                     </MenuItem>
                   ))}
                 </Select>
-                <FormHelperText>Select one or more technologies</FormHelperText>
+                <FormHelperText error={!!errors.technologies}>
+                  {errors.technologies || "Select one or more tools"}
+                </FormHelperText>
               </FormControl>
             </Grid>
             
@@ -293,17 +296,6 @@ const CreateProject = () => {
                 onChange={handleTagsChange}
                 helperText="E.g. frontend, database, API"
               />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Deadline (Optional)"
-                  value={formData.deadline}
-                  onChange={handleDateChange}
-                  slotProps={{ textField: { fullWidth: true } }}
-                />
-              </LocalizationProvider>
             </Grid>
             
             <Grid item xs={12} sx={{ mt: 2 }}>

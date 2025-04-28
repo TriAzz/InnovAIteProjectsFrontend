@@ -113,7 +113,7 @@ const ProjectCard = ({ project }) => {
         {technologies && technologies.length > 0 && (
           <Box sx={{ mb: 1.5 }}>
             <Typography variant="caption" display="block" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-              Technologies:
+              Tools:
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
               {technologies.slice(0, 3).map((tech, index) => (
