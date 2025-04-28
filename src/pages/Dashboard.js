@@ -287,7 +287,6 @@ const Dashboard = () => {
                     label="Category"
                     onChange={handleFilterChange}
                     displayEmpty
-                    renderValue={(value) => value === "" ? "All Categories" : value}
                   >
                     <MenuItem value="">All Categories</MenuItem>
                     {categories.map((category) => (
@@ -310,7 +309,6 @@ const Dashboard = () => {
                     label="Status"
                     onChange={handleFilterChange}
                     displayEmpty
-                    renderValue={(value) => value === "" ? "All Statuses" : value}
                   >
                     <MenuItem value="">All Statuses</MenuItem>
                     {statusOptions.map((status) => (
@@ -333,7 +331,6 @@ const Dashboard = () => {
                     label="Tool"
                     onChange={handleFilterChange}
                     displayEmpty
-                    renderValue={(value) => value === "" ? "All Tools" : value}
                   >
                     <MenuItem value="">All Tools</MenuItem>
                     {toolOptions.map((tool) => (
