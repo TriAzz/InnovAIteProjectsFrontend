@@ -48,11 +48,8 @@ const Footer = () => {
               <Link component={RouterLink} to="/about" color="inherit">
                 About
               </Link>
-              <Link component={RouterLink} to="/privacy" color="inherit">
-                Privacy
-              </Link>
               <Link
-                href="https://github.com/your-username/planner-board"
+                href="https://github.com/TriAzz/InnovAIteProjectsFrontend"
                 target="_blank"
                 rel="noopener noreferrer"
                 color="inherit"
