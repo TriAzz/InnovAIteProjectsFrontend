@@ -49,9 +49,10 @@ const ProjectCard = ({ project }) => {
   const formattedDate = deadline ? new Date(deadline).toLocaleDateString() : 'No deadline';
   
   // Check if current user is creator or team member
-  const isCreator = creator && currentUser && creator.id === currentUser.id;
+  const isCreator = creator && currentUser && 
+    (creator._id === currentUser.id || creator.id === currentUser.id);
   const isTeamMember = teamMembers && currentUser && 
-    teamMembers.some(member => member.id === currentUser.id);
+    teamMembers.some(member => member._id === currentUser.id || member.id === currentUser.id);
   
   const handleCardClick = () => {
     navigate(`/projects/${_id}`);

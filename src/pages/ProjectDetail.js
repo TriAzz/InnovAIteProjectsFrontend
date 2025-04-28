@@ -396,7 +396,8 @@ const ProjectDetail = () => {
   
   // Check if current user is creator or admin
   const canEdit = project && currentUser && 
-    (project.creator?.id === currentUser.id || currentUser.role === 'admin');
+    ((project.creator?._id === currentUser.id || project.creator?.id === currentUser.id) || 
+     currentUser.role === 'admin');
   
   if (loading) {
     return (

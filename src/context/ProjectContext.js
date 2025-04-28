@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { projectServices } from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -16,6 +16,11 @@ export const ProjectProvider = ({ children }) => {
     technology: '',
     search: ''
   });
+  
+  // Add a cache for individual projects to improve performance
+  const projectCache = useRef({});
+  // Add a timestamp for the last projects fetch to manage cache invalidation
+  const lastFetchTimestamp = useRef(null);
   
   const { currentUser } = useAuth();
 
@@ -53,6 +58,18 @@ export const ProjectProvider = ({ children }) => {
         const projectsData = response.data.data || response.data;
         console.log('Setting projects state with:', projectsData);
         setProjects(projectsData);
+        
+        // Update the last fetch timestamp
+        lastFetchTimestamp.current = Date.now();
+        
+        // Update the project cache with the latest data
+        projectsData.forEach(project => {
+          projectCache.current[project._id] = {
+            data: project,
+            timestamp: Date.now()
+          };
+        });
+        
         return projectsData;
       } else {
         console.error('Invalid response format:', response);
@@ -69,19 +86,41 @@ export const ProjectProvider = ({ children }) => {
     }
   };
 
-  // Fetch a single project by ID
+  // Fetch a single project by ID with caching
   const fetchProjectById = async (id) => {
-    setLoading(true);
-    setError('');
     console.log(`[ProjectContext] Fetching project with id: ${id}`);
+    
+    // Set loading state only if not in cache or cache is stale
+    const cachedProject = projectCache.current[id];
+    const now = Date.now();
+    const cacheIsValid = cachedProject && (now - cachedProject.timestamp < 60000); // 1 minute cache
+    
+    if (!cacheIsValid) {
+      setLoading(true);
+    }
+    
+    setError('');
 
     try {
+      // Check cache first
+      if (cacheIsValid) {
+        console.log('[ProjectContext] Using cached project data');
+        return cachedProject.data;
+      }
+      
       const response = await projectServices.getById(id);
       console.log('[ProjectContext] Project fetch response:', response);
       
       if (response && response.data) {
         const projectData = response.data.data || response.data;
         console.log('[ProjectContext] Processed project data:', projectData);
+        
+        // Update cache
+        projectCache.current[id] = {
+          data: projectData,
+          timestamp: now
+        };
+        
         return projectData;
       } else {
         console.error('[ProjectContext] Invalid project response format:', response);
@@ -109,7 +148,16 @@ export const ProjectProvider = ({ children }) => {
       
       if (response && response.data) {
         const newProject = response.data.data || response.data;
-        setProjects([...projects, newProject]);
+        
+        // Update local cache
+        projectCache.current[newProject._id] = {
+          data: newProject,
+          timestamp: Date.now()
+        };
+        
+        // Update projects array
+        setProjects(prevProjects => [...prevProjects, newProject]);
+        
         return newProject;
       } else {
         throw new Error('Invalid response format from create API');
@@ -133,9 +181,18 @@ export const ProjectProvider = ({ children }) => {
       const response = await projectServices.update(id, projectData);
       const updatedProject = response.data.data || response.data;
       
-      setProjects(projects.map(project => 
-        project._id === id ? updatedProject : project
-      ));
+      // Update cache
+      projectCache.current[id] = {
+        data: updatedProject,
+        timestamp: Date.now()
+      };
+      
+      // Update projects array if it exists in the current list
+      setProjects(prevProjects => 
+        prevProjects.map(project => 
+          project._id === id ? updatedProject : project
+        )
+      );
       
       return updatedProject;
     } catch (err) {
@@ -154,7 +211,13 @@ export const ProjectProvider = ({ children }) => {
 
     try {
       await projectServices.delete(id);
-      setProjects(projects.filter(project => project._id !== id));
+      
+      // Remove from cache
+      delete projectCache.current[id];
+      
+      // Update projects array
+      setProjects(prevProjects => prevProjects.filter(project => project._id !== id));
+      
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to delete project';
       setError(message);
@@ -173,9 +236,18 @@ export const ProjectProvider = ({ children }) => {
       const response = await projectServices.addTeamMember(projectId, email);
       const updatedProject = response.data.data || response.data;
       
-      setProjects(projects.map(project => 
-        project._id === projectId ? updatedProject : project
-      ));
+      // Update cache
+      projectCache.current[projectId] = {
+        data: updatedProject,
+        timestamp: Date.now()
+      };
+      
+      // Update projects array
+      setProjects(prevProjects => 
+        prevProjects.map(project => 
+          project._id === projectId ? updatedProject : project
+        )
+      );
       
       return updatedProject;
     } catch (err) {
@@ -205,6 +277,12 @@ export const ProjectProvider = ({ children }) => {
       technology: ''
     });
   };
+  
+  // Clear the project cache
+  const clearCache = () => {
+    projectCache.current = {};
+    lastFetchTimestamp.current = null;
+  };
 
   const value = {
     projects,
@@ -218,7 +296,8 @@ export const ProjectProvider = ({ children }) => {
     deleteProject,
     addTeamMember,
     updateFilters,
-    clearFilters
+    clearFilters,
+    clearCache
   };
 
   return (
