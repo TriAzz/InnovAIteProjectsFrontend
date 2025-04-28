@@ -10,18 +10,21 @@ import {
   Avatar,
   AvatarGroup,
   IconButton,
-  Tooltip
+  Tooltip,
+  Badge
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PersonIcon from '@mui/icons-material/Person';
 import { useAuth } from '../context/AuthContext';
 
 // Status color mapping
 const statusColors = {
   'Not Started': 'default',
   'In Progress': 'primary',
-  'Completed': 'success'
+  'Completed': 'success',
+  'On Hold': 'warning'
 };
 
 const ProjectCard = ({ project }) => {
@@ -47,7 +50,6 @@ const ProjectCard = ({ project }) => {
   
   // Check if current user is creator or team member
   const isCreator = creator && currentUser && creator.id === currentUser.id;
-  // eslint-disable-next-line no-unused-vars
   const isTeamMember = teamMembers && currentUser && 
     teamMembers.some(member => member.id === currentUser.id);
   
@@ -77,24 +79,36 @@ const ProjectCard = ({ project }) => {
         '&:hover': {
           boxShadow: 6,
         },
-        position: 'relative'
+        position: 'relative',
+        // Add subtle highlighting for owned projects
+        border: isCreator ? '1px solid #1976d2' : 'none',
       }}
       onClick={handleCardClick}
     >
       {/* Status badge */}
-      <Chip
-        label={status}
-        color={statusColors[status]}
-        size="small"
-        sx={{
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          fontWeight: 'bold'
-        }}
-      />
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', position: 'absolute', top: 10, right: 10, left: 10 }}>
+        {/* Owner indicator */}
+        {isCreator && (
+          <Chip
+            icon={<PersonIcon sx={{ fontSize: '0.8rem' }} />}
+            label="Your Project"
+            size="small"
+            color="primary"
+            variant="outlined"
+            sx={{ height: 24 }}
+          />
+        )}
+        <Chip
+          label={status}
+          color={statusColors[status]}
+          size="small"
+          sx={{
+            fontWeight: 'bold'
+          }}
+        />
+      </Box>
       
-      <CardContent sx={{ flexGrow: 1 }}>
+      <CardContent sx={{ flexGrow: 1, pt: isCreator ? 5 : 4 }}>
         <Typography gutterBottom variant="h6" component="div" noWrap>
           {title}
         </Typography>
@@ -110,13 +124,35 @@ const ProjectCard = ({ project }) => {
           <Chip label={category} size="small" />
         </Box>
         
-        {/* Added creator display */}
+        {/* Creator display with enhanced styling */}
         {creator && creator.name && (
           <Box sx={{ mb: 1.5 }}>
             <Typography variant="caption" display="block" sx={{ fontWeight: 'bold', mb: 0.5 }}>
               Created by:
             </Typography>
-            <Typography variant="body2">{creator.name}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Avatar 
+                sx={{ 
+                  width: 24, 
+                  height: 24, 
+                  fontSize: '0.75rem',
+                  marginRight: 1,
+                  backgroundColor: isCreator ? 'primary.main' : 'grey.400'
+                }} 
+                alt={creator.name}
+              >
+                {creator.name[0].toUpperCase()}
+              </Avatar>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: isCreator ? 600 : 400,
+                  color: isCreator ? 'primary.main' : 'text.primary'
+                }}
+              >
+                {creator.name} {isCreator && '(You)'}
+              </Typography>
+            </Box>
           </Box>
         )}
         
@@ -148,7 +184,7 @@ const ProjectCard = ({ project }) => {
         <Box>
           {isCreator && (
             <Tooltip title="Edit Project">
-              <IconButton size="small" onClick={handleEditClick}>
+              <IconButton size="small" onClick={handleEditClick} color="primary">
                 <EditIcon />
               </IconButton>
             </Tooltip>
@@ -165,14 +201,14 @@ const ProjectCard = ({ project }) => {
         
         {(teamMembers && teamMembers.length > 0) && (
           <AvatarGroup max={3} sx={{ '& .MuiAvatar-root': { width: 24, height: 24, fontSize: '0.75rem' } }}>
-            {creator && (
-              <Tooltip title={`Creator: ${creator.name}`}>
-                <Avatar alt={creator.name} src="/static/creator.jpg" />
-              </Tooltip>
-            )}
             {teamMembers.map((member, index) => (
               <Tooltip key={index} title={member.name}>
-                <Avatar alt={member.name} src={`/static/member${index}.jpg`} />
+                <Avatar 
+                  alt={member.name} 
+                  sx={{ bgcolor: member.id === currentUser?.id ? 'primary.main' : 'grey.400' }}
+                >
+                  {member.name[0].toUpperCase()}
+                </Avatar>
               </Tooltip>
             ))}
           </AvatarGroup>
