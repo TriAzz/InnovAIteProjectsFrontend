@@ -137,17 +137,21 @@ const Dashboard = () => {
 
   // Function to handle individual filter chip removal
   const handleFilterChipDelete = (filterName) => {
-    const newLocalFilters = { ...localFilters, [filterName]: filterName === 'search' ? '' : 'All' };
+    // Update local filters first
+    const newLocalFilters = { 
+      ...localFilters, 
+      [filterName]: filterName === 'search' ? '' : 'All' 
+    };
     setLocalFilters(newLocalFilters);
     
-    // Immediately update the context filters and fetch projects
+    // Create API filters object with the updated value
     const apiFilters = {
-      search: filterName === 'search' ? '' : localFilters.search,
-      status: filterName === 'status' ? '' : (localFilters.status === 'All' ? '' : localFilters.status),
-      category: filterName === 'category' ? '' : (localFilters.category === 'All' ? '' : localFilters.category),
-      technology: filterName === 'technology' ? '' : (localFilters.technology === 'All' ? '' : localFilters.technology)
+      ...filters,  // Start with current context filters
+      // Only update the filter that was deleted
+      [filterName]: filterName === 'search' ? '' : ''  // Empty string for API regardless of filter type
     };
     
+    // Update context filters and fetch projects
     updateFilters(apiFilters);
     fetchProjects(true);
   };
