@@ -16,10 +16,10 @@ import {
   Stack,
   Alert
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import AddIcon from '@mui/icons-material.Add';
 import { useProjects } from '../context/ProjectContext';
 // eslint-disable-next-line no-unused-vars
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../.context/AuthContext';
 import ProjectCard from '../components/ProjectCard';
 
 const statusOptions = ['All', 'Not Started', 'In Progress', 'Completed'];
@@ -29,7 +29,7 @@ const technologyOptions = ['All', 'React', 'Node.js', 'MongoDB', 'Express', 'Dja
 const Dashboard = () => {
   // eslint-disable-next-line no-unused-vars
   const { currentUser } = useAuth();
-  const { projects, loading, error, filters, updateFilters, fetchProjects } = useProjects();
+  const { projects, loading, error, filters, updateFilters } = useProjects();
   const [localFilters, setLocalFilters] = useState({
     search: '',
     status: 'All',
