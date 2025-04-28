@@ -120,8 +120,10 @@ const CreateProject = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Form submitted with data:', formData);
     
     if (!validate()) {
+      console.log('Validation failed with errors:', errors);
       return;
     }
     
@@ -140,9 +142,11 @@ const CreateProject = () => {
         tags: processedTags
       };
       
+      console.log('Sending project data:', projectData);
       await addProject(projectData);
       navigate('/');
     } catch (error) {
+      console.error('Error submitting form:', error);
       setSubmitError(error.message || 'Failed to create project. Please try again.');
     } finally {
       setSubmitting(false);

@@ -20,8 +20,8 @@ export const ProjectProvider = ({ children }) => {
   const { currentUser } = useAuth();
 
   useEffect(() => {
+    console.log('ProjectContext: currentUser updated', currentUser);
     if (currentUser) {
-      console.log('User authenticated, fetching projects');
       fetchProjects();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -41,15 +41,13 @@ export const ProjectProvider = ({ children }) => {
       if (filters.status) params.status = filters.status;
       if (filters.technology) params.technology = filters.technology;
 
-      // Using getAll instead of getAllProjects to match the method name in api.js
       console.log('Calling projectServices.getAll with params:', params);
       const response = await projectServices.getAll(params);
       console.log('API response:', response);
       
       if (response && response.data) {
-        // Check the structure of the response data
-        console.log('Response data structure:', response.data);
         const projectsData = response.data.data || response.data;
+        console.log('Setting projects state with:', projectsData);
         setProjects(projectsData);
         return projectsData;
       } else {
@@ -92,10 +90,15 @@ export const ProjectProvider = ({ children }) => {
 
     try {
       const response = await projectServices.create(projectData);
-      console.log('Create project response:', response);
-      const newProject = response.data.data || response.data;
-      setProjects([...projects, newProject]);
-      return newProject;
+      console.log('API response for create project:', response);
+      
+      if (response && response.data) {
+        const newProject = response.data.data || response.data;
+        setProjects([...projects, newProject]);
+        return newProject;
+      } else {
+        throw new Error('Invalid response format from create API');
+      }
     } catch (err) {
       console.error('Error creating project:', err);
       const message = err.response?.data?.message || 'Failed to create project';
@@ -112,8 +115,8 @@ export const ProjectProvider = ({ children }) => {
     setError('');
 
     try {
-      const response = await projectServices.updateProject(id, projectData);
-      const updatedProject = response.data.data;
+      const response = await projectServices.update(id, projectData);
+      const updatedProject = response.data.data || response.data;
       
       setProjects(projects.map(project => 
         project._id === id ? updatedProject : project
@@ -135,7 +138,7 @@ export const ProjectProvider = ({ children }) => {
     setError('');
 
     try {
-      await projectServices.deleteProject(id);
+      await projectServices.delete(id);
       setProjects(projects.filter(project => project._id !== id));
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to delete project';
@@ -153,7 +156,7 @@ export const ProjectProvider = ({ children }) => {
 
     try {
       const response = await projectServices.addTeamMember(projectId, email);
-      const updatedProject = response.data.data;
+      const updatedProject = response.data.data || response.data;
       
       setProjects(projects.map(project => 
         project._id === projectId ? updatedProject : project
