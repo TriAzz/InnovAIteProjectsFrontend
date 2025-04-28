@@ -48,7 +48,7 @@ const Dashboard = () => {
     });
     
     // Always force a projects fetch on mount with forceRefresh=true
-    // This ensures projects load on both navigation and page refresh
+    console.log('Dashboard mounted - forcing project refresh');
     fetchProjects(true);
     
     // Return cleanup function that triggers projects reload when component unmounts

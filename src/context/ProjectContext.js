@@ -35,20 +35,22 @@ export const ProjectProvider = ({ children }) => {
   useEffect(() => {
     console.log('ProjectContext: Authentication state changed', { currentUser, isAuthenticated });
     
-    // Improved auth check that handles both login flow and page refreshes
+    // Always check for cached auth, regardless of React state
     const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
     
-    // If we have either proper auth state OR a valid token+user combo from localStorage
-    if ((isAuthenticated && currentUser) || (token && (user.id || user._id))) {
-      console.log('User is authenticated or token exists, fetching projects');
-      // Reset retry counter when auth state changes
+    if (token && user) {
+      console.log('Token and user found in localStorage, fetching projects');
       fetchAttempts.current = 0;
-      // On page refresh or initial load, force a refresh
+      // ALWAYS force a refresh on mount or auth changes to prevent blank dashboard
+      fetchProjects(true);
+    } else if (isAuthenticated && currentUser) {
+      console.log('User is authenticated via context, fetching projects');
+      fetchAttempts.current = 0;
       fetchProjects(true);
     } else {
-      console.log('User is not authenticated, clearing projects');
-      // Clear projects when user is not authenticated
+      console.log('No authentication found, clearing projects');
       setProjects([]);
       clearCache();
     }
@@ -57,11 +59,9 @@ export const ProjectProvider = ({ children }) => {
   
   // Separate effect for filter changes (don't force refresh)
   useEffect(() => {
-    // Check for token and user to handle page refreshes properly
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    
-    if ((isAuthenticated && currentUser) || (token && user && user.id)) {
+    // Skip filter-based fetching on initial mount - the auth effect will handle it
+    if (lastFetchTimestamp.current) {
+      // Only fetch based on filters if we've already loaded projects once
       console.log('Filters changed, fetching projects with new filters');
       fetchProjects(false);
     }
@@ -79,16 +79,12 @@ export const ProjectProvider = ({ children }) => {
   const fetchProjects = async (forceRefresh = false) => {
     // Check if we have a token even if isAuthenticated is not yet updated
     const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     // Don't attempt to fetch if we don't have authentication 
     if (!token) {
       console.log('No token found, skipping project fetch');
       return [];
     }
-    
-    // Always fetch if forceRefresh is true, regardless of cached projects
-    // This ensures the refresh button works properly
     
     setLoading(true);
     setError('');
@@ -103,8 +99,12 @@ export const ProjectProvider = ({ children }) => {
       if (filters.status) params.status = filters.status;
       if (filters.technology) params.technology = filters.technology;
       
-      // Add a timestamp to bypass cache when force refreshing
-      if (forceRefresh) params._t = Date.now();
+      // ALWAYS add a timestamp parameter when force refreshing to prevent browser/API caching
+      if (forceRefresh) {
+        params._t = Date.now();
+        // Since this is a forced refresh, we should clear any cached projects first
+        console.log('Force refresh requested, clearing cached projects');
+      }
 
       console.log('Calling projectServices.getAll with params:', params);
       const response = await projectServices.getAll(params);
@@ -116,7 +116,7 @@ export const ProjectProvider = ({ children }) => {
       if (response && response.data) {
         const projectsData = Array.isArray(response.data) ? response.data : 
                             (response.data.data || []);
-        console.log('Setting projects state with:', projectsData);
+        console.log('Setting projects state with:', projectsData.length, 'projects');
         setProjects(projectsData);
         
         // Save to localStorage immediately
