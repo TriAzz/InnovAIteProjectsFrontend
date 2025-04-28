@@ -413,10 +413,35 @@ const ProjectDetail = () => {
     setDeleteDialogOpen(false);
   };
   
-  // Check if current user is creator or admin
-  const canEdit = project && currentUser && 
-    ((project.creator?._id === currentUser.id || project.creator?.id === currentUser.id) || 
-     currentUser.role === 'admin');
+  // Check if current user is creator or admin - improved to match ProjectCard component logic
+  const canEdit = project && currentUser && (
+    // Check all possible ID formats
+    (project.creator?._id && currentUser._id && project.creator._id === currentUser._id) || 
+    (project.creator?._id && currentUser.id && project.creator._id === currentUser.id) || 
+    (project.creator?.id && currentUser._id && project.creator.id === currentUser._id) || 
+    (project.creator?.id && currentUser.id && project.creator.id === currentUser.id) ||
+    // Also check by email for extra reliability
+    (project.creator?.email && currentUser.email && project.creator.email === currentUser.email) ||
+    // Admin check
+    (currentUser.role === 'admin')
+  );
+  
+  // Log creator check details for debugging
+  console.log('ProjectDetail creator check:', {
+    projectId: id,
+    projectTitle: project?.title,
+    creator: project?.creator ? {
+      id: project.creator.id, 
+      _id: project.creator._id,
+      email: project.creator.email
+    } : 'No creator',
+    currentUser: currentUser ? {
+      id: currentUser.id, 
+      _id: currentUser._id,
+      email: currentUser.email
+    } : 'Not logged in',
+    canEdit: canEdit
+  });
   
   if (loading) {
     return (
