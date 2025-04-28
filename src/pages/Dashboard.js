@@ -69,6 +69,26 @@ const Dashboard = () => {
   // Track if any filter is active
   const hasActiveFilters = Object.values(localFilters).some(value => value !== '');
 
+  // Execute full reset filters behavior (clear filters + load all projects) on component mount
+  useEffect(() => {
+    // Clear filters in context
+    clearFilters();
+    
+    // Reset local filter state
+    setLocalFilters({
+      search: '',
+      category: '',
+      status: '',
+      technology: ''
+    });
+    
+    // Fetch all projects with a force refresh to ensure latest data
+    fetchProjects(true);
+    
+    // Log that we've performed this action
+    console.log('Dashboard: Auto-reset filters and fetched all projects on mount');
+  }, []); // Empty dependency array ensures this runs only once on mount
+
   // Initialize local filters from context
   useEffect(() => {
     setLocalFilters({
