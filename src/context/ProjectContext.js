@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { projectServices } from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -57,12 +57,24 @@ export const ProjectProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, isAuthenticated]);
   
+  // Stabilize filter values using a ref to prevent unnecessary refreshes
+  const filtersRef = useRef(filters);
+  
+  // Memoized function to check if filters have actually changed
+  const haveFiltersChanged = (newFilters, oldFilters) => {
+    return newFilters.search !== oldFilters.search || 
+           newFilters.category !== oldFilters.category ||
+           newFilters.status !== oldFilters.status ||
+           newFilters.technology !== oldFilters.technology;
+  };
+  
   // Separate effect for filter changes (don't force refresh)
   useEffect(() => {
     // Skip filter-based fetching on initial mount - the auth effect will handle it
-    if (lastFetchTimestamp.current) {
-      // Only fetch based on filters if we've already loaded projects once
+    if (lastFetchTimestamp.current && haveFiltersChanged(filters, filtersRef.current)) {
+      // Only fetch based on filters if we've already loaded projects once and filters actually changed
       console.log('Filters changed, fetching projects with new filters');
+      filtersRef.current = {...filters};
       fetchProjects(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,7 +88,7 @@ export const ProjectProvider = ({ children }) => {
   }, [projects]);
 
   // Fetch all projects based on filters
-  const fetchProjects = async (forceRefresh = false) => {
+  const fetchProjects = useCallback(async (forceRefresh = false) => {
     // Check if we have a token even if isAuthenticated is not yet updated
     const token = localStorage.getItem('token');
     
@@ -161,7 +173,7 @@ export const ProjectProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]); // Dependency on filters, but we now have guards in place
 
   // Fetch a single project by ID with caching
   const fetchProjectById = async (id) => {
@@ -354,13 +366,21 @@ export const ProjectProvider = ({ children }) => {
   };
 
   // Update filter parameters
-  const updateFilters = (newFilters) => {
+  const updateFilters = useCallback((newFilters) => {
     console.log('Updating filters to:', newFilters);
-    setFilters(prevFilters => ({
-      ...prevFilters,
-      ...newFilters
-    }));
-  };
+    setFilters(prevFilters => {
+      const updatedFilters = {
+        ...prevFilters,
+        ...newFilters
+      };
+      
+      // Only trigger an update if filters actually changed
+      if (haveFiltersChanged(updatedFilters, prevFilters)) {
+        return updatedFilters;
+      }
+      return prevFilters;
+    });
+  }, []);
 
   // Clear all filters
   const clearFilters = () => {

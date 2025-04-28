@@ -52,11 +52,10 @@ const Dashboard = () => {
     // Check if we need to refresh data after navigating back
     const needsRefresh = sessionStorage.getItem('dashboard_needs_refresh') === 'true';
     
-    // Always force a projects fetch on mount or when auth changes
-    console.log('Dashboard loading projects - auth state or component changed');
-    fetchProjects(true);
-    
+    // Only fetch projects when component mounts or when auth changes
     if (needsRefresh) {
+      console.log('Dashboard refreshing projects - coming back from navigation');
+      fetchProjects(true);
       sessionStorage.removeItem('dashboard_needs_refresh');
     }
     
@@ -65,7 +64,7 @@ const Dashboard = () => {
       // Set a session storage flag to indicate we need to refresh projects on next mount
       sessionStorage.setItem('dashboard_needs_refresh', 'true');
     };
-  }, [currentUser, fetchProjects, filters]); // Add filters to dependencies to ensure loading when filters change
+  }, [currentUser, fetchProjects]); // Removed filters from dependencies to prevent infinite loops
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
