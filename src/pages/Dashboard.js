@@ -21,6 +21,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useProjects } from '../context/ProjectContext';
+import { useAuth } from '../context/AuthContext';
 import ProjectCard from '../components/ProjectCard';
 
 const statusOptions = ['All', 'Not Started', 'In Progress', 'Completed'];
@@ -29,6 +30,7 @@ const technologyOptions = ['All', 'Bolt', 'v0 (Vercel)', 'Cursor', 'Replit', 'Lo
 
 const Dashboard = () => {
   const { projects, loading, error, filters, updateFilters, fetchProjects } = useProjects();
+  const { currentUser } = useAuth(); // Add auth context to ensure proper synchronization
   
   const [localFilters, setLocalFilters] = useState({
     search: '',
@@ -37,7 +39,7 @@ const Dashboard = () => {
     technology: 'All'
   });
 
-  // Enhanced useEffect to ensure projects load on navigation or refresh
+  // Consolidated useEffect to ensure projects load on all navigation scenarios
   useEffect(() => {
     // Set initial local filters from context
     setLocalFilters({
@@ -47,29 +49,23 @@ const Dashboard = () => {
       technology: filters.technology || 'All'
     });
     
-    // Always force a projects fetch on mount with forceRefresh=true
-    console.log('Dashboard mounted - forcing project refresh');
+    // Check if we need to refresh data after navigating back
+    const needsRefresh = sessionStorage.getItem('dashboard_needs_refresh') === 'true';
+    
+    // Always force a projects fetch on mount or when auth changes
+    console.log('Dashboard loading projects - auth state or component changed');
     fetchProjects(true);
     
+    if (needsRefresh) {
+      sessionStorage.removeItem('dashboard_needs_refresh');
+    }
+    
     // Return cleanup function that triggers projects reload when component unmounts
-    // This helps when navigating back to dashboard from other pages
     return () => {
       // Set a session storage flag to indicate we need to refresh projects on next mount
       sessionStorage.setItem('dashboard_needs_refresh', 'true');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Additional effect to handle navigation events
-  useEffect(() => {
-    // Check if we need to refresh data after navigating back
-    const needsRefresh = sessionStorage.getItem('dashboard_needs_refresh') === 'true';
-    if (needsRefresh) {
-      fetchProjects(true);
-      sessionStorage.removeItem('dashboard_needs_refresh');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentUser, fetchProjects, filters]); // Add filters to dependencies to ensure loading when filters change
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;

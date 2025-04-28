@@ -18,6 +18,7 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PersonIcon from '@mui/icons-material/Person';
 import LanguageIcon from '@mui/icons-material/Language';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; // Added for created date
 import { useAuth } from '../context/AuthContext';
 
 // Status color mapping
@@ -43,12 +44,16 @@ const ProjectCard = ({ project }) => {
     tags,
     creator,
     teamMembers,
-    deadline,
+    // Remove deadline field
+    createdAt, // Add createdAt field
     githubLink,
     liveSiteUrl
   } = project;
 
-  const formattedDate = deadline ? new Date(deadline).toLocaleDateString() : 'No deadline';
+  // Format the creation date instead of deadline
+  const formattedCreatedDate = createdAt 
+    ? new Date(createdAt).toLocaleDateString() 
+    : 'Unknown date';
   
   // Fixed: Improved creator check logic to reliably identify if the current user is the creator
   const isCreator = currentUser && creator && (
@@ -222,10 +227,10 @@ const ProjectCard = ({ project }) => {
           </Box>
         )}
         
-        {deadline && (
+        {createdAt && (
           <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-            <AccessTimeIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary' }} />
-            <Typography variant="caption">{formattedDate}</Typography>
+            <CalendarTodayIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary' }} />
+            <Typography variant="caption">{formattedCreatedDate}</Typography>
           </Box>
         )}
       </CardContent>
