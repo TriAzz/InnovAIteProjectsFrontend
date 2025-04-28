@@ -83,16 +83,13 @@ export const ProjectProvider = ({ children }) => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     // Don't attempt to fetch if we don't have authentication 
-    if (!token || !user || !user.id) {
-      console.log('No token or user found, skipping project fetch');
+    if (!token) {
+      console.log('No token found, skipping project fetch');
       return [];
     }
     
-    // If we're not forcing refresh and we have projects in state, don't fetch again
-    if (!forceRefresh && projects.length > 0) {
-      console.log('Using cached projects, not fetching from API');
-      return projects;
-    }
+    // Always fetch if forceRefresh is true, regardless of cached projects
+    // This ensures the refresh button works properly
     
     setLoading(true);
     setError('');
@@ -122,6 +119,9 @@ export const ProjectProvider = ({ children }) => {
                             (response.data.data || []);
         console.log('Setting projects state with:', projectsData);
         setProjects(projectsData);
+        
+        // Save to localStorage immediately
+        localStorage.setItem('cachedProjects', JSON.stringify(projectsData));
         
         // Update the last fetch timestamp
         lastFetchTimestamp.current = Date.now();

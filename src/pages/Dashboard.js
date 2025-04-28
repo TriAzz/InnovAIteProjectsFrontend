@@ -103,6 +103,9 @@ const Dashboard = () => {
       category: '',
       technology: ''
     });
+    
+    // Force a refresh after resetting filters to ensure projects are reloaded
+    fetchProjects(true);
   };
 
   return (
