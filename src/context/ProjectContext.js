@@ -69,11 +69,22 @@ export const ProjectProvider = ({ children }) => {
   const fetchProjectById = async (id) => {
     setLoading(true);
     setError('');
+    console.log(`[ProjectContext] Fetching project with id: ${id}`);
 
     try {
       const response = await projectServices.getById(id);
-      return response.data.data || response.data;
+      console.log('[ProjectContext] Project fetch response:', response);
+      
+      if (response && response.data) {
+        const projectData = response.data.data || response.data;
+        console.log('[ProjectContext] Processed project data:', projectData);
+        return projectData;
+      } else {
+        console.error('[ProjectContext] Invalid project response format:', response);
+        throw new Error('Invalid response format');
+      }
     } catch (err) {
+      console.error('[ProjectContext] Error fetching project:', err);
       const message = err.response?.data?.message || 'Failed to fetch project';
       setError(message);
       throw new Error(message);

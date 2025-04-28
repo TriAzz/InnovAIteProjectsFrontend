@@ -13,6 +13,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import CreateProject from './pages/CreateProject';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
+import About from './pages/About'; // Added import for About page
 
 // Components
 import Header from './components/Header';
@@ -65,6 +66,7 @@ const AppContent = () => {
               <Profile />
             </ProtectedRoute>
           } />
+          <Route path="/about" element={<About />} /> {/* Added route for About page */}
           <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>

@@ -74,7 +74,10 @@ export const projectServices = {
     console.log('[API] Calling projectServices.getAll with params:', params);
     return api.get('/projects', { params });
   },
-  getById: (id) => api.get(`/projects/${id}`),
+  getById: (id) => {
+    console.log(`[API] Fetching project with ID: ${id}`);
+    return api.get(`/projects/${id}`);
+  },
   create: (projectData) => api.post('/projects', projectData),
   update: (id, projectData) => api.put(`/projects/${id}`, projectData),
   delete: (id) => api.delete(`/projects/${id}`),
