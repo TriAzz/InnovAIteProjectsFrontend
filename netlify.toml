@@ -1,9 +1,11 @@
 [build]
   command = "npm run build"
   publish = "build"
-  # Adding environment variables to prevent lint errors from failing build
+  # Environment variables to prevent build failures
   [build.environment]
     CI = "false"
+    NODE_ENV = "production"
+    REACT_APP_API_URL = "https://innovaite-api.herokuapp.com" # Update this to your actual API URL
 
 # Handle SPA routing by redirecting all paths to index.html
 [[redirects]]
