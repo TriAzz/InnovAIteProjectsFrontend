@@ -75,6 +75,7 @@ const EditProjectForm = ({ project, onCancel }) => {
     title: project.title || '',
     description: project.description || '',
     githubLink: project.githubLink || '',
+    liveSiteUrl: project.liveSiteUrl || '',
     category: project.category || '',
     status: project.status || 'Not Started',
     technologies: project.technologies || [],
@@ -104,8 +105,28 @@ const EditProjectForm = ({ project, onCancel }) => {
       newErrors.technologies = 'Please select at least one tool';
     }
     
+    // URL validation for GitHub link if provided
+    if (formData.githubLink && !isValidUrl(formData.githubLink)) {
+      newErrors.githubLink = 'Please enter a valid URL';
+    }
+    
+    // URL validation for live site URL if provided
+    if (formData.liveSiteUrl && !isValidUrl(formData.liveSiteUrl)) {
+      newErrors.liveSiteUrl = 'Please enter a valid URL';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+  
+  // Helper function to validate URLs
+  const isValidUrl = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
 
   const handleChange = (e) => {
@@ -220,6 +241,22 @@ const EditProjectForm = ({ project, onCancel }) => {
             placeholder="https://github.com/username/repo"
             value={formData.githubLink}
             onChange={handleChange}
+            error={!!errors.githubLink}
+            helperText={errors.githubLink}
+          />
+        </Grid>
+        
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            id="liveSiteUrl"
+            name="liveSiteUrl"
+            label="Live Site URL (Optional)"
+            placeholder="https://example.com"
+            value={formData.liveSiteUrl}
+            onChange={handleChange}
+            error={!!errors.liveSiteUrl}
+            helperText={errors.liveSiteUrl}
           />
         </Grid>
         
@@ -579,6 +616,29 @@ const ProjectDetail = () => {
                           rel="noopener noreferrer"
                         >
                           {githubLink}
+                        </a>
+                      } 
+                    />
+                  </ListItem>
+                )}
+                
+                {liveSiteUrl && (
+                  <ListItem>
+                    <ListItemIcon>
+                      <svg style={{ width: '24px', height: '24px' }} viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M17.9,17.39C17.64,16.59 16.89,16 16,16H15V13A1,1 0 0,0 14,12H8V10H10A1,1 0 0,0 11,9V7H13A2,2 0 0,0 15,5V4.59C17.93,5.77 20,8.64 20,12C20,14.08 19.2,15.97 17.9,17.39M11,19.93C7.05,19.44 4,16.08 4,12C4,11.38 4.08,10.78 4.21,10.21L9,15V16A2,2 0 0,0 11,18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+                      </svg>
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary="Live Site URL" 
+                      secondary={
+                        <a 
+                          href={liveSiteUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          style={{ color: '#1976d2', textDecoration: 'underline' }}
+                        >
+                          {liveSiteUrl}
                         </a>
                       } 
                     />

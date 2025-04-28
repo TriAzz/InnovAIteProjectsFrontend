@@ -21,19 +21,48 @@ export const ProjectProvider = ({ children }) => {
   const projectCache = useRef({});
   // Add a timestamp for the last projects fetch to manage cache invalidation
   const lastFetchTimestamp = useRef(null);
+  // Add a retry mechanism for handling auth token issues
+  const fetchAttempts = useRef(0);
+  const maxRetries = 2;
   
-  const { currentUser } = useAuth();
+  const { currentUser, isAuthenticated } = useAuth();
 
+  // Handle initial loading and refresh cases
   useEffect(() => {
-    console.log('ProjectContext: currentUser updated', currentUser);
-    if (currentUser) {
-      fetchProjects();
+    console.log('ProjectContext: Authentication state changed', { currentUser, isAuthenticated });
+    
+    if (isAuthenticated && currentUser) {
+      console.log('User is authenticated, fetching projects');
+      // Reset retry counter when auth state changes
+      fetchAttempts.current = 0;
+      // On page refresh or initial load, force a refresh
+      fetchProjects(true);
+    } else {
+      console.log('User is not authenticated, clearing projects');
+      // Clear projects when user is not authenticated
+      setProjects([]);
+      clearCache();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, filters]);
+  }, [currentUser, isAuthenticated]);
+  
+  // Separate effect for filter changes (don't force refresh)
+  useEffect(() => {
+    if (isAuthenticated && currentUser && lastFetchTimestamp.current) {
+      console.log('Filters changed, fetching projects with new filters');
+      fetchProjects(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   // Fetch all projects based on filters
   const fetchProjects = async (forceRefresh = false) => {
+    // Don't attempt to fetch if we're not authenticated
+    if (!isAuthenticated) {
+      console.log('Not authenticated, skipping project fetch');
+      return [];
+    }
+    
     setLoading(true);
     setError('');
     console.log('Fetching projects with filters:', filters);
@@ -54,8 +83,12 @@ export const ProjectProvider = ({ children }) => {
       const response = await projectServices.getAll(params);
       console.log('API response:', response);
       
+      // Reset fetch attempts on success
+      fetchAttempts.current = 0;
+      
       if (response && response.data) {
-        const projectsData = response.data.data || response.data;
+        const projectsData = Array.isArray(response.data) ? response.data : 
+                            (response.data.data || []);
         console.log('Setting projects state with:', projectsData);
         setProjects(projectsData);
         
@@ -78,6 +111,20 @@ export const ProjectProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Error fetching projects:', err);
+      
+      // Handle auth errors with retries
+      if (err.response?.status === 401 && fetchAttempts.current < maxRetries) {
+        console.log(`Auth error, retrying (${fetchAttempts.current + 1}/${maxRetries})...`);
+        fetchAttempts.current += 1;
+        
+        // Wait a moment before retrying
+        setTimeout(() => {
+          fetchProjects(true);
+        }, 1000);
+        
+        return [];
+      }
+      
       const message = err.response?.data?.message || 'Failed to fetch projects';
       setError(message);
       return [];
@@ -176,10 +223,26 @@ export const ProjectProvider = ({ children }) => {
   const updateProject = async (id, projectData) => {
     setLoading(true);
     setError('');
+    console.log('[ProjectContext] Updating project:', id, projectData);
 
     try {
-      const response = await projectServices.update(id, projectData);
-      const updatedProject = response.data.data || response.data;
+      // Ensure we're sending all required fields in the correct format
+      const processedData = {
+        ...projectData,
+        // Ensure arrays are properly formatted
+        tags: Array.isArray(projectData.tags) ? projectData.tags : [],
+        technologies: Array.isArray(projectData.technologies) ? projectData.technologies : []
+      };
+      
+      const response = await projectServices.update(id, processedData);
+      console.log('[ProjectContext] Project update response:', response);
+      
+      let updatedProject = response.data;
+      if (response.data && response.data.data) {
+        updatedProject = response.data.data;
+      }
+      
+      console.log('[ProjectContext] Processed updated project:', updatedProject);
       
       // Update cache
       projectCache.current[id] = {
@@ -196,6 +259,7 @@ export const ProjectProvider = ({ children }) => {
       
       return updatedProject;
     } catch (err) {
+      console.error('[ProjectContext] Error updating project:', err);
       const message = err.response?.data?.message || 'Failed to update project';
       setError(message);
       throw new Error(message);

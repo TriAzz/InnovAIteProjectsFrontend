@@ -160,6 +160,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     currentUser,
+    isAuthenticated: !!currentUser,
     loading,
     error,
     register,
