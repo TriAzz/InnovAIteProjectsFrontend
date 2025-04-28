@@ -297,7 +297,7 @@ const Dashboard = () => {
             
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth>
                   <InputLabel id="category-label">Category</InputLabel>
                   <Select
                     labelId="category-label"
@@ -306,6 +306,13 @@ const Dashboard = () => {
                     value={localFilters.category}
                     label="Category"
                     onChange={handleFilterChange}
+                    displayEmpty
+                    renderValue={(selected) => {
+                      if (selected === '') {
+                        return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>All Categories</span>;
+                      }
+                      return selected;
+                    }}
                   >
                     <MenuItem value="">All Categories</MenuItem>
                     {categories.map((category) => (
@@ -318,7 +325,7 @@ const Dashboard = () => {
               </Grid>
               
               <Grid item xs={12} sm={4}>
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth>
                   <InputLabel id="status-label">Status</InputLabel>
                   <Select
                     labelId="status-label"
@@ -327,6 +334,13 @@ const Dashboard = () => {
                     value={localFilters.status}
                     label="Status"
                     onChange={handleFilterChange}
+                    displayEmpty
+                    renderValue={(selected) => {
+                      if (selected === '') {
+                        return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>All Statuses</span>;
+                      }
+                      return selected;
+                    }}
                   >
                     <MenuItem value="">All Statuses</MenuItem>
                     {statusOptions.map((status) => (
@@ -339,7 +353,7 @@ const Dashboard = () => {
               </Grid>
               
               <Grid item xs={12} sm={4}>
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth>
                   <InputLabel id="technology-label">Tool</InputLabel>
                   <Select
                     labelId="technology-label"
@@ -348,6 +362,13 @@ const Dashboard = () => {
                     value={localFilters.technology}
                     label="Tool"
                     onChange={handleFilterChange}
+                    displayEmpty
+                    renderValue={(selected) => {
+                      if (selected === '') {
+                        return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>All Tools</span>;
+                      }
+                      return selected;
+                    }}
                   >
                     <MenuItem value="">All Tools</MenuItem>
                     {toolOptions.map((tool) => (
