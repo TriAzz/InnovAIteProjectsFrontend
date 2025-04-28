@@ -28,10 +28,11 @@ export const ProjectProvider = ({ children }) => {
   }, [currentUser, filters]);
 
   // Fetch all projects based on filters
-  const fetchProjects = async () => {
+  const fetchProjects = async (forceRefresh = false) => {
     setLoading(true);
     setError('');
     console.log('Fetching projects with filters:', filters);
+    console.log('Force refresh:', forceRefresh);
 
     try {
       // Convert filters to API query params
@@ -40,6 +41,9 @@ export const ProjectProvider = ({ children }) => {
       if (filters.category) params.category = filters.category;
       if (filters.status) params.status = filters.status;
       if (filters.technology) params.technology = filters.technology;
+      
+      // Add a timestamp to bypass cache when force refreshing
+      if (forceRefresh) params._t = Date.now();
 
       console.log('Calling projectServices.getAll with params:', params);
       const response = await projectServices.getAll(params);

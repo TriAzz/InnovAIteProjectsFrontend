@@ -14,9 +14,12 @@ import {
   CircularProgress,
   Chip,
   Stack,
-  Alert
+  Alert,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useProjects } from '../context/ProjectContext';
 import ProjectCard from '../components/ProjectCard';
 
@@ -43,8 +46,8 @@ const Dashboard = () => {
       technology: filters.technology || 'All'
     });
     
-    // Force a projects fetch on mount
-    fetchProjects();
+    // Force a projects fetch on mount with forceRefresh=true to bypass any caching
+    fetchProjects(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -88,14 +91,21 @@ const Dashboard = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Project Planner Board
         </Typography>
-        <Button
-          component={RouterLink}
-          to="/create-project"
-          variant="contained"
-          startIcon={<AddIcon />}
-        >
-          Create Project
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Tooltip title="Refresh">
+            <IconButton onClick={() => fetchProjects(true)}>
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+          <Button
+            component={RouterLink}
+            to="/create-project"
+            variant="contained"
+            startIcon={<AddIcon />}
+          >
+            Create Project
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters */}
