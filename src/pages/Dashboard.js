@@ -250,22 +250,20 @@ const Dashboard = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress />
         </Box>
-      ) : projects.filter(project => project.liveSiteUrl).length === 0 ? (
+      ) : projects.length === 0 ? (
         <Alert severity="info">
-          No projects with live site URLs found. {' '}
+          No projects found. {' '}
           <RouterLink to="/create-project" style={{ textDecoration: 'none' }}>
-            Create a project with a live site URL
+            Create your first project
           </RouterLink>
         </Alert>
       ) : (
         <Grid container spacing={3}>
-          {projects
-            .filter(project => project.liveSiteUrl) // Only show projects with a live site URL
-            .map((project) => (
-              <Grid item key={project._id} xs={12} sm={6} md={4}>
-                <ProjectCard project={project} />
-              </Grid>
-            ))}
+          {projects.map((project) => (
+            <Grid item key={project._id} xs={12} sm={6} md={4}>
+              <ProjectCard project={project} />
+            </Grid>
+          ))}
         </Grid>
       )}
     </Container>
