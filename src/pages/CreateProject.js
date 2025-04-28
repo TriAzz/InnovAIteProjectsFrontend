@@ -42,6 +42,7 @@ const CreateProject = () => {
     title: '',
     description: '',
     githubLink: '',
+    liveSiteUrl: '',
     category: '',
     status: 'Not Started',
     technologies: [], // We'll keep the field name the same but use for tools
@@ -210,6 +211,20 @@ const CreateProject = () => {
                 onChange={handleChange}
                 error={!!errors.githubLink}
                 helperText={errors.githubLink}
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                id="liveSiteUrl"
+                name="liveSiteUrl"
+                label="Live Site URL"
+                placeholder="https://www.example.com"
+                value={formData.liveSiteUrl}
+                onChange={handleChange}
+                error={!!errors.liveSiteUrl}
+                helperText={errors.liveSiteUrl}
               />
             </Grid>
             

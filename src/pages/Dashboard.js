@@ -37,6 +37,7 @@ const Dashboard = () => {
     technology: 'All'
   });
 
+  // Enhanced useEffect to ensure projects load on navigation or refresh
   useEffect(() => {
     // Set initial local filters from context
     setLocalFilters({
@@ -46,8 +47,27 @@ const Dashboard = () => {
       technology: filters.technology || 'All'
     });
     
-    // Force a projects fetch on mount with forceRefresh=true to bypass any caching
+    // Always force a projects fetch on mount with forceRefresh=true
+    // This ensures projects load on both navigation and page refresh
     fetchProjects(true);
+    
+    // Return cleanup function that triggers projects reload when component unmounts
+    // This helps when navigating back to dashboard from other pages
+    return () => {
+      // Set a session storage flag to indicate we need to refresh projects on next mount
+      sessionStorage.setItem('dashboard_needs_refresh', 'true');
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Additional effect to handle navigation events
+  useEffect(() => {
+    // Check if we need to refresh data after navigating back
+    const needsRefresh = sessionStorage.getItem('dashboard_needs_refresh') === 'true';
+    if (needsRefresh) {
+      fetchProjects(true);
+      sessionStorage.removeItem('dashboard_needs_refresh');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -230,20 +250,22 @@ const Dashboard = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress />
         </Box>
-      ) : projects.length === 0 ? (
+      ) : projects.filter(project => project.liveSiteUrl).length === 0 ? (
         <Alert severity="info">
-          No projects found. {' '}
+          No projects with live site URLs found. {' '}
           <RouterLink to="/create-project" style={{ textDecoration: 'none' }}>
-            Create your first project
+            Create a project with a live site URL
           </RouterLink>
         </Alert>
       ) : (
         <Grid container spacing={3}>
-          {projects.map((project) => (
-            <Grid item key={project._id} xs={12} sm={6} md={4}>
-              <ProjectCard project={project} />
-            </Grid>
-          ))}
+          {projects
+            .filter(project => project.liveSiteUrl) // Only show projects with a live site URL
+            .map((project) => (
+              <Grid item key={project._id} xs={12} sm={6} md={4}>
+                <ProjectCard project={project} />
+              </Grid>
+            ))}
         </Grid>
       )}
     </Container>

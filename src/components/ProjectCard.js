@@ -17,6 +17,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PersonIcon from '@mui/icons-material/Person';
+import LanguageIcon from '@mui/icons-material/Language';
 import { useAuth } from '../context/AuthContext';
 
 // Status color mapping
@@ -43,7 +44,8 @@ const ProjectCard = ({ project }) => {
     creator,
     teamMembers,
     deadline,
-    githubLink
+    githubLink,
+    liveSiteUrl
   } = project;
 
   const formattedDate = deadline ? new Date(deadline).toLocaleDateString() : 'No deadline';
@@ -67,6 +69,13 @@ const ProjectCard = ({ project }) => {
     e.stopPropagation();
     if (githubLink) {
       window.open(githubLink, '_blank');
+    }
+  };
+  
+  const handleLiveSiteClick = (e) => {
+    e.stopPropagation();
+    if (liveSiteUrl) {
+      window.open(liveSiteUrl, '_blank');
     }
   };
 
@@ -195,6 +204,14 @@ const ProjectCard = ({ project }) => {
             <Tooltip title="View GitHub Repository">
               <IconButton size="small" onClick={handleGithubClick}>
                 <GitHubIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          
+          {liveSiteUrl && (
+            <Tooltip title="View Live Site">
+              <IconButton size="small" onClick={handleLiveSiteClick}>
+                <LanguageIcon />
               </IconButton>
             </Tooltip>
           )}

@@ -466,6 +466,7 @@ const ProjectDetail = () => {
     title,
     description,
     githubLink,
+    liveSiteUrl,
     category,
     status,
     technologies = [],
