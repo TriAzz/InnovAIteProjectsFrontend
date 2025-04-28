@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useProjects } from '../context/ProjectContext';
-import { useAuth } from '../context/AuthContext';
 import ProjectCard from '../components/ProjectCard';
 
 const statusOptions = ['All', 'Not Started', 'In Progress', 'Completed'];
@@ -26,7 +25,6 @@ const categoryOptions = ['All', 'Web Development', 'Mobile Development', 'Data S
 const technologyOptions = ['All', 'Bolt', 'v0 (Vercel)', 'Cursor', 'Replit', 'Lovable', 'Windsurf', 'Tempo Labs', 'Fynix', 'GitHub CoPilot', 'Augment'];
 
 const Dashboard = () => {
-  const { currentUser } = useAuth();
   const { projects, loading, error, filters, updateFilters, fetchProjects } = useProjects();
   
   const [localFilters, setLocalFilters] = useState({
