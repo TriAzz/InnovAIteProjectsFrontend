@@ -27,9 +27,15 @@ const categoryOptions = ['All', 'Hobby Projects', 'InnovAIte Tools', 'Research',
 const technologyOptions = ['All', 'React', 'Node.js', 'MongoDB', 'Express', 'Django', 'Python', 'Java', 'Windsurf', 'Other'];
 
 const Dashboard = () => {
+  console.log('[Dashboard] Component rendering');
+  
   // eslint-disable-next-line no-unused-vars
   const { currentUser } = useAuth();
-  const { projects, loading, error, filters, updateFilters } = useProjects();
+  const { projects, loading, error, filters, updateFilters, fetchProjects } = useProjects();
+  
+  console.log('[Dashboard] Current auth state:', { currentUser: !!currentUser });
+  console.log('[Dashboard] Projects state:', { projects, loading, error });
+  
   const [localFilters, setLocalFilters] = useState({
     search: '',
     status: 'All',
@@ -38,6 +44,7 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
+    console.log('[Dashboard] Effect running to set initial filters');
     // Set initial local filters from context
     setLocalFilters({
       search: filters.search || '',
@@ -45,6 +52,10 @@ const Dashboard = () => {
       category: filters.category || 'All',
       technology: filters.technology || 'All'
     });
+    
+    // Force a projects fetch on mount
+    console.log('[Dashboard] Manually triggering fetchProjects on mount');
+    fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -57,6 +68,7 @@ const Dashboard = () => {
   };
 
   const applyFilters = () => {
+    console.log('[Dashboard] Applying filters:', localFilters);
     // Convert "All" values to empty strings for the API
     const apiFilters = {
       search: localFilters.search,
@@ -68,6 +80,7 @@ const Dashboard = () => {
   };
 
   const resetFilters = () => {
+    console.log('[Dashboard] Resetting filters');
     setLocalFilters({
       search: '',
       status: 'All',
@@ -82,8 +95,20 @@ const Dashboard = () => {
     });
   };
 
+  console.log('[Dashboard] Rendering with projects length:', projects.length);
+
   return (
     <Container maxWidth="lg">
+      {/* Debug info */}
+      <Box sx={{ my: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+        <Typography variant="subtitle2">Debug Info:</Typography>
+        <Typography variant="body2">Projects: {projects ? projects.length : 'null'}</Typography>
+        <Typography variant="body2">Loading: {loading ? 'true' : 'false'}</Typography>
+        <Typography variant="body2">Error: {error ? error : 'none'}</Typography>
+        <Typography variant="body2">User: {currentUser ? currentUser.email : 'not logged in'}</Typography>
+      </Box>
+      
+      {/* Rest of the Dashboard component */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Project Planner Board

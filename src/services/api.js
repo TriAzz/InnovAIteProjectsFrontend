@@ -1,8 +1,12 @@
 import axios from 'axios';
 
+// For debugging
+const API_URL = process.env.REACT_APP_API_URL || 'https://innovaiteprojectsbackend.onrender.com/api';
+console.log('[API] Using API URL:', API_URL);
+
 // Create base axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://innovaiteprojectsbackend.onrender.com/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -14,20 +18,37 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log(`[API] Request to ${config.url} - Auth token attached`);
+    } else {
+      console.log(`[API] Request to ${config.url} - No auth token available`);
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('[API] Request interceptor error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Add a response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API] Response from ${response.config.url}:`, {
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
   (error) => {
-    const { response } = error;
+    console.error('[API] Response error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.response?.data?.message || error.message
+    });
     
     // Handle session expiration
-    if (response && response.status === 401) {
+    if (error.response && error.response.status === 401) {
+      console.log('[API] 401 Unauthorized - Clearing user session');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
@@ -49,7 +70,10 @@ export const authServices = {
 
 // Project services
 export const projectServices = {
-  getAll: (params = {}) => api.get('/projects', { params }),
+  getAll: (params = {}) => {
+    console.log('[API] Calling projectServices.getAll with params:', params);
+    return api.get('/projects', { params });
+  },
   getById: (id) => api.get(`/projects/${id}`),
   create: (projectData) => api.post('/projects', projectData),
   update: (id, projectData) => api.put(`/projects/${id}`, projectData),
