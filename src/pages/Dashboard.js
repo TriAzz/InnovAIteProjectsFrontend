@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -30,7 +30,8 @@ const technologyOptions = ['All', 'Bolt', 'v0 (Vercel)', 'Cursor', 'Replit', 'Lo
 
 const Dashboard = () => {
   const { projects, loading, error, filters, updateFilters, fetchProjects } = useProjects();
-  const { currentUser } = useAuth(); // Add auth context to ensure proper synchronization
+  const { currentUser } = useAuth();
+  const location = useLocation();
   
   const [localFilters, setLocalFilters] = useState({
     search: '',
@@ -39,32 +40,49 @@ const Dashboard = () => {
     technology: 'All'
   });
 
-  // Consolidated useEffect to ensure projects load on all navigation scenarios
+  // Load projects on initial load and navigation
   useEffect(() => {
-    // Set initial local filters from context
-    setLocalFilters({
-      search: filters.search || '',
-      status: filters.status || 'All',
-      category: filters.category || 'All',
-      technology: filters.technology || 'All'
+    console.log('Dashboard mounted or navigation changed - loading projects with default filters');
+    
+    // Reset filters when first loading or navigating back to the page
+    updateFilters({
+      search: '',
+      status: '',
+      category: '',
+      technology: ''
     });
     
-    // Check if we need to refresh data after navigating back
-    const needsRefresh = sessionStorage.getItem('dashboard_needs_refresh') === 'true';
+    // Reset local filters to match default values
+    setLocalFilters({
+      search: '',
+      status: 'All',
+      category: 'All',
+      technology: 'All'
+    });
     
-    // Only fetch projects when component mounts or when auth changes
-    if (needsRefresh) {
-      console.log('Dashboard refreshing projects - coming back from navigation');
-      fetchProjects(true);
-      sessionStorage.removeItem('dashboard_needs_refresh');
+    // Force fetch projects immediately
+    fetchProjects(true);
+    
+    // Remove any navigation flags
+    sessionStorage.removeItem('dashboard_needs_refresh');
+  }, [location.pathname, updateFilters, fetchProjects]);
+
+  // Update local filters when context filters change
+  useEffect(() => {
+    if (
+      filters.search !== (localFilters.search || '') ||
+      (filters.status || 'All') !== localFilters.status ||
+      (filters.category || 'All') !== localFilters.category ||
+      (filters.technology || 'All') !== localFilters.technology
+    ) {
+      setLocalFilters({
+        search: filters.search || '',
+        status: filters.status ? filters.status : 'All',
+        category: filters.category ? filters.category : 'All',
+        technology: filters.technology ? filters.technology : 'All'
+      });
     }
-    
-    // Return cleanup function that triggers projects reload when component unmounts
-    return () => {
-      // Set a session storage flag to indicate we need to refresh projects on next mount
-      sessionStorage.setItem('dashboard_needs_refresh', 'true');
-    };
-  }, [currentUser, fetchProjects]); // Removed filters from dependencies to prevent infinite loops
+  }, [filters]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -82,16 +100,24 @@ const Dashboard = () => {
       category: localFilters.category === 'All' ? '' : localFilters.category,
       technology: localFilters.technology === 'All' ? '' : localFilters.technology
     };
+    
+    // Update context filters
     updateFilters(apiFilters);
+    
+    // Fetch projects with new filters
+    fetchProjects(true);
   };
 
   const resetFilters = () => {
+    // Reset local UI filters
     setLocalFilters({
       search: '',
       status: 'All',
       category: 'All',
       technology: 'All'
     });
+    
+    // Reset context filters
     updateFilters({
       search: '',
       status: '',
@@ -99,7 +125,30 @@ const Dashboard = () => {
       technology: ''
     });
     
-    // Force a refresh after resetting filters to ensure projects are reloaded
+    // Force fetch projects with reset filters
+    fetchProjects(true);
+  };
+
+  // Function to handle refresh button click - keeps current filters
+  const handleRefresh = () => {
+    console.log('Manual refresh requested - keeping current filters');
+    fetchProjects(true);
+  };
+
+  // Function to handle individual filter chip removal
+  const handleFilterChipDelete = (filterName) => {
+    const newLocalFilters = { ...localFilters, [filterName]: filterName === 'search' ? '' : 'All' };
+    setLocalFilters(newLocalFilters);
+    
+    // Immediately update the context filters and fetch projects
+    const apiFilters = {
+      search: filterName === 'search' ? '' : localFilters.search,
+      status: filterName === 'status' ? '' : (localFilters.status === 'All' ? '' : localFilters.status),
+      category: filterName === 'category' ? '' : (localFilters.category === 'All' ? '' : localFilters.category),
+      technology: filterName === 'technology' ? '' : (localFilters.technology === 'All' ? '' : localFilters.technology)
+    };
+    
+    updateFilters(apiFilters);
     fetchProjects(true);
   };
 
@@ -111,7 +160,7 @@ const Dashboard = () => {
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Tooltip title="Refresh">
-            <IconButton onClick={() => fetchProjects(true)}>
+            <IconButton onClick={handleRefresh}>
               <RefreshIcon />
             </IconButton>
           </Tooltip>
@@ -213,24 +262,28 @@ const Dashboard = () => {
           <Typography variant="subtitle2" sx={{ mb: 1 }}>Active Filters:</Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap">
             {localFilters.search && (
-              <Chip label={`Search: ${localFilters.search}`} onDelete={() => {
-                setLocalFilters(prev => ({ ...prev, search: '' }));
-              }} />
+              <Chip 
+                label={`Search: ${localFilters.search}`} 
+                onDelete={() => handleFilterChipDelete('search')} 
+              />
             )}
             {localFilters.status !== 'All' && (
-              <Chip label={`Status: ${localFilters.status}`} onDelete={() => {
-                setLocalFilters(prev => ({ ...prev, status: 'All' }));
-              }} />
+              <Chip 
+                label={`Status: ${localFilters.status}`} 
+                onDelete={() => handleFilterChipDelete('status')} 
+              />
             )}
             {localFilters.category !== 'All' && (
-              <Chip label={`Category: ${localFilters.category}`} onDelete={() => {
-                setLocalFilters(prev => ({ ...prev, category: 'All' }));
-              }} />
+              <Chip 
+                label={`Category: ${localFilters.category}`} 
+                onDelete={() => handleFilterChipDelete('category')} 
+              />
             )}
             {localFilters.technology !== 'All' && (
-              <Chip label={`Tool: ${localFilters.technology}`} onDelete={() => {
-                setLocalFilters(prev => ({ ...prev, technology: 'All' }));
-              }} />
+              <Chip 
+                label={`Tool: ${localFilters.technology}`} 
+                onDelete={() => handleFilterChipDelete('technology')} 
+              />
             )}
           </Stack>
         </Box>
