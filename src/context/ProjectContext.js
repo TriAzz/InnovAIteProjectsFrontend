@@ -7,7 +7,11 @@ const ProjectContext = createContext();
 export const useProjects = () => useContext(ProjectContext);
 
 export const ProjectProvider = ({ children }) => {
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState(() => {
+    // Initialize projects from localStorage if available
+    const cachedProjects = localStorage.getItem('cachedProjects');
+    return cachedProjects ? JSON.parse(cachedProjects) : [];
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -31,8 +35,14 @@ export const ProjectProvider = ({ children }) => {
   useEffect(() => {
     console.log('ProjectContext: Authentication state changed', { currentUser, isAuthenticated });
     
-    if (isAuthenticated && currentUser) {
-      console.log('User is authenticated, fetching projects');
+    // Check if we have a token even if isAuthenticated is not yet updated
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    // If we have both token and user data, we can attempt to fetch projects
+    // This ensures projects are loaded even on a page refresh
+    if ((isAuthenticated && currentUser) || (token && user && user.id)) {
+      console.log('User is authenticated or token exists, fetching projects');
       // Reset retry counter when auth state changes
       fetchAttempts.current = 0;
       // On page refresh or initial load, force a refresh
@@ -48,19 +58,40 @@ export const ProjectProvider = ({ children }) => {
   
   // Separate effect for filter changes (don't force refresh)
   useEffect(() => {
-    if (isAuthenticated && currentUser && lastFetchTimestamp.current) {
+    // Check for token and user to handle page refreshes properly
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if ((isAuthenticated && currentUser) || (token && user && user.id)) {
       console.log('Filters changed, fetching projects with new filters');
       fetchProjects(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
+  // Save projects to localStorage whenever they change
+  useEffect(() => {
+    if (projects && projects.length > 0) {
+      localStorage.setItem('cachedProjects', JSON.stringify(projects));
+    }
+  }, [projects]);
+
   // Fetch all projects based on filters
   const fetchProjects = async (forceRefresh = false) => {
-    // Don't attempt to fetch if we're not authenticated
-    if (!isAuthenticated) {
-      console.log('Not authenticated, skipping project fetch');
+    // Check if we have a token even if isAuthenticated is not yet updated
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    // Don't attempt to fetch if we don't have authentication 
+    if (!token || !user || !user.id) {
+      console.log('No token or user found, skipping project fetch');
       return [];
+    }
+    
+    // If we're not forcing refresh and we have projects in state, don't fetch again
+    if (!forceRefresh && projects.length > 0) {
+      console.log('Using cached projects, not fetching from API');
+      return projects;
     }
     
     setLoading(true);
@@ -346,6 +377,7 @@ export const ProjectProvider = ({ children }) => {
   const clearCache = () => {
     projectCache.current = {};
     lastFetchTimestamp.current = null;
+    localStorage.removeItem('cachedProjects');
   };
 
   const value = {

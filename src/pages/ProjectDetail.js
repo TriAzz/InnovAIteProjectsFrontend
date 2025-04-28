@@ -105,30 +105,12 @@ const EditProjectForm = ({ project, onCancel }) => {
       newErrors.technologies = 'Please select at least one tool';
     }
     
-    // URL validation for GitHub link if provided
-    if (formData.githubLink && !isValidUrl(formData.githubLink)) {
-      newErrors.githubLink = 'Please enter a valid URL';
-    }
-    
-    // URL validation for live site URL if provided
-    if (formData.liveSiteUrl && !isValidUrl(formData.liveSiteUrl)) {
-      newErrors.liveSiteUrl = 'Please enter a valid URL';
-    }
+    // Removed URL validation for GitHub link and live site URL as requested
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
   
-  // Helper function to validate URLs
-  const isValidUrl = (url) => {
-    try {
-      new URL(url);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({

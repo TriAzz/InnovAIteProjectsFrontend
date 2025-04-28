@@ -50,11 +50,25 @@ const ProjectCard = ({ project }) => {
 
   const formattedDate = deadline ? new Date(deadline).toLocaleDateString() : 'No deadline';
   
-  // Check if current user is creator or team member
-  const isCreator = creator && currentUser && 
-    (creator._id === currentUser.id || creator.id === currentUser.id);
+  // Fixed: Improved creator check logic to reliably identify if the current user is the creator
+  const isCreator = currentUser && creator && (
+    // Check all possible ID formats
+    (creator._id && currentUser._id && creator._id === currentUser._id) || 
+    (creator._id && currentUser.id && creator._id === currentUser.id) || 
+    (creator.id && currentUser._id && creator.id === currentUser._id) || 
+    (creator.id && currentUser.id && creator.id === currentUser.id) ||
+    // Also check by email for extra reliability
+    (creator.email && currentUser.email && creator.email === currentUser.email)
+  );
+  
   const isTeamMember = teamMembers && currentUser && 
-    teamMembers.some(member => member._id === currentUser.id || member.id === currentUser.id);
+    teamMembers.some(member => 
+      member._id === currentUser._id || 
+      member._id === currentUser.id || 
+      member.id === currentUser._id || 
+      member.id === currentUser.id ||
+      member.email === currentUser.email
+    );
   
   const handleCardClick = () => {
     navigate(`/projects/${_id}`);
@@ -78,6 +92,26 @@ const ProjectCard = ({ project }) => {
       window.open(liveSiteUrl, '_blank');
     }
   };
+
+  // For debugging
+  console.log('ProjectCard detailed ownership check:', {
+    projectId: _id,
+    projectTitle: title,
+    creator: creator ? {
+      id: creator.id, 
+      _id: creator._id,
+      email: creator.email
+    } : 'No creator',
+    currentUser: currentUser ? {
+      id: currentUser.id, 
+      _id: currentUser._id,
+      email: currentUser.email
+    } : 'Not logged in',
+    matchByObjectId: creator && currentUser && creator._id === currentUser._id,
+    matchById: creator && currentUser && creator.id === currentUser.id,
+    matchByEmail: creator && currentUser && creator.email === currentUser.email,
+    isCreator
+  });
 
   return (
     <Card 
