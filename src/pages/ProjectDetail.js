@@ -22,7 +22,14 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle
+  DialogTitle,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  OutlinedInput,
+  FormHelperText
 } from '@mui/material';
 import {
   Category as CategoryIcon,
@@ -41,6 +48,287 @@ const statusColors = {
   'Not Started': 'default',
   'In Progress': 'primary',
   'Completed': 'success'
+};
+
+// Updated categories to match backend schema
+const categories = ['Web Development', 'Mobile Development', 'Data Science', 'Machine Learning', 'UI/UX Design', 'DevOps', 'Research', 'Other'];
+const statusOptions = ['Not Started', 'In Progress', 'Completed', 'On Hold'];
+// Changed to Tools with new options
+const toolOptions = ['Bolt', 'v0 (Vercel)', 'Cursor', 'Replit', 'Lovable', 'Windsurf', 'Tempo Labs', 'Fynix', 'GitHub CoPilot', 'Augment'];
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+const EditProjectForm = ({ project, onCancel }) => {
+  const navigate = useNavigate();
+  const { updateProject } = useProjects();
+  
+  const [formData, setFormData] = useState({
+    title: project.title || '',
+    description: project.description || '',
+    githubLink: project.githubLink || '',
+    category: project.category || '',
+    status: project.status || 'Not Started',
+    technologies: project.technologies || [],
+    tags: Array.isArray(project.tags) ? project.tags.join(', ') : ''
+  });
+  
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  
+  const validate = () => {
+    const newErrors = {};
+    
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+    
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+    }
+    
+    if (!formData.category) {
+      newErrors.category = 'Please select a category';
+    }
+
+    if (formData.technologies.length === 0) {
+      newErrors.technologies = 'Please select at least one tool';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when field is edited
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleToolChange = (event) => {
+    const { value } = event.target;
+    setFormData(prev => ({
+      ...prev,
+      technologies: typeof value === 'string' ? value.split(',') : value,
+    }));
+    
+    // Clear error when field is edited
+    if (errors.technologies) {
+      setErrors(prev => ({
+        ...prev,
+        technologies: ''
+      }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validate()) {
+      return;
+    }
+    
+    setSubmitting(true);
+    setSubmitError('');
+    
+    try {
+      // Process tags from comma-separated string to array
+      const processedTags = formData.tags ? 
+        formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '') : 
+        [];
+      
+      // Create project data object with deadline carried over from original project
+      const projectData = {
+        ...formData,
+        tags: processedTags,
+        deadline: project.deadline // Keep the original deadline
+      };
+      
+      await updateProject(project._id, projectData);
+      navigate(`/projects/${project._id}`);
+    } catch (error) {
+      setSubmitError(error.message || 'Failed to update project. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Box component="form" onSubmit={handleSubmit} noValidate>
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {submitError}
+        </Alert>
+      )}
+      
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <TextField
+            required
+            fullWidth
+            id="title"
+            name="title"
+            label="Project Title"
+            value={formData.title}
+            onChange={handleChange}
+            error={!!errors.title}
+            helperText={errors.title}
+          />
+        </Grid>
+        
+        <Grid item xs={12}>
+          <TextField
+            required
+            fullWidth
+            id="description"
+            name="description"
+            label="Project Description"
+            multiline
+            rows={4}
+            value={formData.description}
+            onChange={handleChange}
+            error={!!errors.description}
+            helperText={errors.description}
+          />
+        </Grid>
+        
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            id="githubLink"
+            name="githubLink"
+            label="GitHub Repository URL (Optional)"
+            placeholder="https://github.com/username/repo"
+            value={formData.githubLink}
+            onChange={handleChange}
+          />
+        </Grid>
+        
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth required error={!!errors.category}>
+            <InputLabel id="category-label">Category</InputLabel>
+            <Select
+              labelId="category-label"
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              label="Category"
+            >
+              {categories.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.category && <FormHelperText>{errors.category}</FormHelperText>}
+          </FormControl>
+        </Grid>
+        
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              label="Status"
+            >
+              {statusOptions.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {status}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        
+        <Grid item xs={12}>
+          <FormControl fullWidth required error={!!errors.technologies}>
+            <InputLabel id="technologies-label">Tools</InputLabel>
+            <Select
+              labelId="technologies-label"
+              id="technologies"
+              multiple
+              value={formData.technologies}
+              onChange={handleToolChange}
+              input={<OutlinedInput id="select-technologies" label="Tools" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </Box>
+              )}
+              MenuProps={MenuProps}
+            >
+              {toolOptions.map((tool) => (
+                <MenuItem key={tool} value={tool}>
+                  {tool}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText error={!!errors.technologies}>
+              {errors.technologies || "Select one or more tools"}
+            </FormHelperText>
+          </FormControl>
+        </Grid>
+        
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            id="tags"
+            name="tags"
+            label="Tags"
+            placeholder="Enter tags separated by commas"
+            value={formData.tags}
+            onChange={handleChange}
+            helperText="E.g. frontend, database, API"
+          />
+        </Grid>
+        
+        <Grid item xs={12} sx={{ mt: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button 
+              variant="outlined" 
+              onClick={onCancel}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="contained"
+              disabled={submitting}
+            >
+              {submitting ? <CircularProgress size={24} /> : 'Save Changes'}
+            </Button>
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 };
 
 const ProjectDetail = () => {
@@ -152,24 +440,23 @@ const ProjectDetail = () => {
     );
   }
   
-  // If edit mode is active, redirect to a form (to be implemented)
+  // If edit mode is active, show edit form
   if (isEditMode) {
-    // In a real application, you might create a dedicated edit form
-    // or reuse the CreateProject component with pre-filled values
-    
-    // For now, we'll just redirect back with a message
     return (
       <Container maxWidth="md">
-        <Alert severity="info" sx={{ mt: 4 }}>
-          Edit mode would be implemented here, with a form pre-filled with project data.
-        </Alert>
-        <Button
-          variant="contained"
-          sx={{ mt: 2 }}
-          onClick={() => setIsEditMode(false)}
-        >
-          Back to Project
-        </Button>
+        <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Edit Project
+          </Typography>
+          
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
+          
+          {project && <EditProjectForm project={project} onCancel={() => setIsEditMode(false)} />}
+        </Paper>
       </Container>
     );
   }

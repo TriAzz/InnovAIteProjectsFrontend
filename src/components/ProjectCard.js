@@ -110,6 +110,16 @@ const ProjectCard = ({ project }) => {
           <Chip label={category} size="small" />
         </Box>
         
+        {/* Added creator display */}
+        {creator && creator.name && (
+          <Box sx={{ mb: 1.5 }}>
+            <Typography variant="caption" display="block" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+              Created by:
+            </Typography>
+            <Typography variant="body2">{creator.name}</Typography>
+          </Box>
+        )}
+        
         {technologies && technologies.length > 0 && (
           <Box sx={{ mb: 1.5 }}>
             <Typography variant="caption" display="block" sx={{ fontWeight: 'bold', mb: 0.5 }}>

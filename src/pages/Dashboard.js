@@ -18,23 +18,16 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useProjects } from '../context/ProjectContext';
-// eslint-disable-next-line no-unused-vars
 import { useAuth } from '../context/AuthContext';
 import ProjectCard from '../components/ProjectCard';
 
 const statusOptions = ['All', 'Not Started', 'In Progress', 'Completed'];
-const categoryOptions = ['All', 'Hobby Projects', 'InnovAIte Tools', 'Research', 'Other'];
-const technologyOptions = ['All', 'React', 'Node.js', 'MongoDB', 'Express', 'Django', 'Python', 'Java', 'Windsurf', 'Other'];
+const categoryOptions = ['All', 'Web Development', 'Mobile Development', 'Data Science', 'Machine Learning', 'UI/UX Design', 'DevOps', 'Research', 'Other'];
+const technologyOptions = ['All', 'Bolt', 'v0 (Vercel)', 'Cursor', 'Replit', 'Lovable', 'Windsurf', 'Tempo Labs', 'Fynix', 'GitHub CoPilot', 'Augment'];
 
 const Dashboard = () => {
-  console.log('[Dashboard] Component rendering');
-  
-  // eslint-disable-next-line no-unused-vars
   const { currentUser } = useAuth();
   const { projects, loading, error, filters, updateFilters, fetchProjects } = useProjects();
-  
-  console.log('[Dashboard] Current auth state:', { currentUser: !!currentUser });
-  console.log('[Dashboard] Projects state:', { projects, loading, error });
   
   const [localFilters, setLocalFilters] = useState({
     search: '',
@@ -44,7 +37,6 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    console.log('[Dashboard] Effect running to set initial filters');
     // Set initial local filters from context
     setLocalFilters({
       search: filters.search || '',
@@ -54,7 +46,6 @@ const Dashboard = () => {
     });
     
     // Force a projects fetch on mount
-    console.log('[Dashboard] Manually triggering fetchProjects on mount');
     fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -68,7 +59,6 @@ const Dashboard = () => {
   };
 
   const applyFilters = () => {
-    console.log('[Dashboard] Applying filters:', localFilters);
     // Convert "All" values to empty strings for the API
     const apiFilters = {
       search: localFilters.search,
@@ -80,7 +70,6 @@ const Dashboard = () => {
   };
 
   const resetFilters = () => {
-    console.log('[Dashboard] Resetting filters');
     setLocalFilters({
       search: '',
       status: 'All',
@@ -95,20 +84,8 @@ const Dashboard = () => {
     });
   };
 
-  console.log('[Dashboard] Rendering with projects length:', projects.length);
-
   return (
     <Container maxWidth="lg">
-      {/* Debug info */}
-      <Box sx={{ my: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-        <Typography variant="subtitle2">Debug Info:</Typography>
-        <Typography variant="body2">Projects: {projects ? projects.length : 'null'}</Typography>
-        <Typography variant="body2">Loading: {loading ? 'true' : 'false'}</Typography>
-        <Typography variant="body2">Error: {error ? error : 'none'}</Typography>
-        <Typography variant="body2">User: {currentUser ? currentUser.email : 'not logged in'}</Typography>
-      </Box>
-      
-      {/* Rest of the Dashboard component */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Project Planner Board
@@ -177,12 +154,12 @@ const Dashboard = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth size="small">
-              <InputLabel>Technology</InputLabel>
+              <InputLabel>Tool</InputLabel>
               <Select
                 name="technology"
                 value={localFilters.technology}
                 onChange={handleFilterChange}
-                label="Technology"
+                label="Tool"
               >
                 {technologyOptions.map((option) => (
                   <MenuItem key={option} value={option}>
@@ -225,7 +202,7 @@ const Dashboard = () => {
               }} />
             )}
             {localFilters.technology !== 'All' && (
-              <Chip label={`Technology: ${localFilters.technology}`} onDelete={() => {
+              <Chip label={`Tool: ${localFilters.technology}`} onDelete={() => {
                 setLocalFilters(prev => ({ ...prev, technology: 'All' }));
               }} />
             )}
