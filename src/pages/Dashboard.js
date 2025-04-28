@@ -1,319 +1,436 @@
-import React, { useState, useEffect } from 'react';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
-  Grid,
   Box,
-  Button,
+  Grid,
   TextField,
-  MenuItem,
   FormControl,
   InputLabel,
   Select,
-  CircularProgress,
+  MenuItem,
+  Button,
   Chip,
-  Stack,
-  Alert,
   IconButton,
-  Tooltip
+  Paper,
+  Divider,
+  CircularProgress,
+  Alert,
+  InputAdornment,
+  Tooltip,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import {
+  Search as SearchIcon,
+  Add as AddIcon,
+  Refresh as RefreshIcon,
+  FilterList as FilterListIcon,
+  Close as CloseIcon,
+  FilterAlt as FilterAltIcon,
+  Clear as ClearIcon
+} from '@mui/icons-material';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
 import ProjectCard from '../components/ProjectCard';
 
-const statusOptions = ['All', 'Not Started', 'In Progress', 'Completed'];
-const categoryOptions = ['All', 'Web Development', 'Mobile Development', 'Data Science', 'Machine Learning', 'UI/UX Design', 'DevOps', 'Research', 'Other'];
-const technologyOptions = ['All', 'Bolt', 'v0 (Vercel)', 'Cursor', 'Replit', 'Lovable', 'Windsurf', 'Tempo Labs', 'Fynix', 'GitHub CoPilot', 'Augment'];
+// Constants for filter options
+const categories = ['Web Development', 'Mobile Development', 'Data Science', 'Machine Learning', 'UI/UX Design', 'DevOps', 'Research', 'Other'];
+const statusOptions = ['Not Started', 'In Progress', 'Completed', 'On Hold'];
+const toolOptions = ['Bolt', 'v0 (Vercel)', 'Cursor', 'Replit', 'Lovable', 'Windsurf', 'Tempo Labs', 'Fynix', 'GitHub CoPilot', 'Augment'];
 
 const Dashboard = () => {
-  const { projects, loading, error, filters, updateFilters, fetchProjects } = useProjects();
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const location = useLocation();
-  
+  const { 
+    projects, 
+    loading, 
+    error,
+    filters: contextFilters,
+    updateFilters, 
+    clearFilters, 
+    fetchProjects 
+  } = useProjects();
+
+  // Local filter state (UI state)
   const [localFilters, setLocalFilters] = useState({
     search: '',
-    status: 'All',
-    category: 'All',
-    technology: 'All'
+    category: '',
+    status: '',
+    technology: ''
   });
+  
+  // State for filter panel visibility on mobile
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [showFilters, setShowFilters] = useState(!isMobile);
+  
+  // Track if any filter is active
+  const hasActiveFilters = Object.values(localFilters).some(value => value !== '');
 
-  // Load projects on initial load and navigation
+  // Initialize local filters from context
   useEffect(() => {
-    console.log('Dashboard mounted or navigation changed - loading projects');
-    
-    // Reset local filters to match default values
     setLocalFilters({
-      search: '',
-      status: 'All',
-      category: 'All',
-      technology: 'All'
+      search: contextFilters.search || '',
+      category: contextFilters.category || '',
+      status: contextFilters.status || '',
+      technology: contextFilters.technology || ''
     });
-    
-    // Just fetch projects without resetting filters in context
-    // This ensures we don't interfere with any existing filters
-    fetchProjects(true);
-    
-    // Remove any navigation flags
-    sessionStorage.removeItem('dashboard_needs_refresh');
-  }, [location.pathname, fetchProjects]);
+  }, [contextFilters]);
 
-  // Update local filters when context filters change
-  useEffect(() => {
-    if (
-      filters.search !== (localFilters.search || '') ||
-      (filters.status || 'All') !== localFilters.status ||
-      (filters.category || 'All') !== localFilters.category ||
-      (filters.technology || 'All') !== localFilters.technology
-    ) {
-      setLocalFilters({
-        search: filters.search || '',
-        status: filters.status ? filters.status : 'All',
-        category: filters.category ? filters.category : 'All',
-        technology: filters.technology ? filters.technology : 'All'
-      });
-    }
-  }, [filters, localFilters]);
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setLocalFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Handle search input change
+  const handleSearchChange = (event) => {
+    const { value } = event.target;
+    setLocalFilters(prev => ({ ...prev, search: value }));
   };
 
-  const applyFilters = () => {
-    // Convert "All" values to empty strings for the API
-    const apiFilters = {
-      search: localFilters.search,
-      status: localFilters.status === 'All' ? '' : localFilters.status,
-      category: localFilters.category === 'All' ? '' : localFilters.category,
-      technology: localFilters.technology === 'All' ? '' : localFilters.technology
-    };
-    
-    // Update context filters
-    updateFilters(apiFilters);
-    
-    // Fetch projects with new filters
-    fetchProjects(true);
+  // Handle filter changes
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    setLocalFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  const resetFilters = () => {
-    // Reset local UI filters
+  // Handle filter submission
+  const handleApplyFilters = () => {
+    updateFilters(localFilters);
+  };
+
+  // Handle filter reset
+  const handleResetFilters = () => {
     setLocalFilters({
       search: '',
-      status: 'All',
-      category: 'All',
-      technology: 'All'
-    });
-    
-    // Reset context filters
-    updateFilters({
-      search: '',
-      status: '',
       category: '',
+      status: '',
       technology: ''
     });
-    
-    // Force fetch projects with reset filters
-    fetchProjects(true);
+    clearFilters();
   };
 
-  // Function to handle refresh button click - keeps current filters
-  const handleRefresh = () => {
-    console.log('Manual refresh requested - keeping current filters');
-    fetchProjects(true);
+  // Remove a single filter
+  const handleRemoveFilter = (filterName) => {
+    setLocalFilters(prev => ({ ...prev, [filterName]: '' }));
+    updateFilters({ ...localFilters, [filterName]: '' });
   };
 
-  // Function to handle individual filter chip removal
-  const handleFilterChipDelete = (filterName) => {
-    // Update local filters first
-    const newLocalFilters = { 
-      ...localFilters, 
-      [filterName]: filterName === 'search' ? '' : 'All' 
-    };
-    setLocalFilters(newLocalFilters);
+  // Toggle filter panel visibility (mobile)
+  const toggleFilters = () => {
+    setShowFilters(prev => !prev);
+  };
+
+  // Navigate to create project page
+  const handleCreateProject = () => {
+    navigate('/create-project');
+  };
+
+  // Refresh projects list
+  const handleRefresh = useCallback(() => {
+    fetchProjects(true); // true forces a refresh
+  }, [fetchProjects]);
+
+  // Render active filter chips for visual feedback
+  const renderFilterChips = () => {
+    const chips = [];
     
-    // Create API filters object with the updated value
-    const apiFilters = {
-      ...filters,  // Start with current context filters
-      // Only update the filter that was deleted
-      [filterName]: filterName === 'search' ? '' : ''  // Empty string for API regardless of filter type
-    };
+    if (localFilters.search) {
+      chips.push(
+        <Chip 
+          key="search" 
+          label={`Search: ${localFilters.search}`}
+          onDelete={() => handleRemoveFilter('search')} 
+          color="primary" 
+          variant="outlined"
+          size="small"
+        />
+      );
+    }
     
-    // Update context filters and fetch projects
-    updateFilters(apiFilters);
-    fetchProjects(true);
+    if (localFilters.category) {
+      chips.push(
+        <Chip 
+          key="category" 
+          label={`Category: ${localFilters.category}`}
+          onDelete={() => handleRemoveFilter('category')} 
+          color="primary" 
+          variant="outlined"
+          size="small"
+        />
+      );
+    }
+    
+    if (localFilters.status) {
+      chips.push(
+        <Chip 
+          key="status" 
+          label={`Status: ${localFilters.status}`}
+          onDelete={() => handleRemoveFilter('status')} 
+          color="primary" 
+          variant="outlined"
+          size="small"
+        />
+      );
+    }
+    
+    if (localFilters.technology) {
+      chips.push(
+        <Chip 
+          key="technology" 
+          label={`Tool: ${localFilters.technology}`}
+          onDelete={() => handleRemoveFilter('technology')} 
+          color="primary" 
+          variant="outlined"
+          size="small"
+        />
+      );
+    }
+    
+    return chips;
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Project Planner Board
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Tooltip title="Refresh">
-            <IconButton onClick={handleRefresh}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-          <Button
-            component={RouterLink}
-            to="/create-project"
-            variant="contained"
-            startIcon={<AddIcon />}
-          >
-            Create Project
-          </Button>
+    <Container maxWidth="xl">
+      <Box sx={{ mb: 4, mt: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" component="h1">
+            Projects Dashboard
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Tooltip title="Refresh Projects">
+              <IconButton onClick={handleRefresh} disabled={loading}>
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateProject}
+            >
+              Create Project
+            </Button>
+          </Box>
         </Box>
-      </Box>
-
-      {/* Filters */}
-      <Box sx={{ mb: 4, p: 2, borderRadius: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
-        <Typography variant="h6" gutterBottom>
-          Filter Projects
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              label="Search"
-              name="search"
-              value={localFilters.search}
-              onChange={handleFilterChange}
-              fullWidth
-              variant="outlined"
-              size="small"
-              placeholder="Search by title or description"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Status</InputLabel>
-              <Select
-                name="status"
-                value={localFilters.status}
-                onChange={handleFilterChange}
-                label="Status"
-              >
-                {statusOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Category</InputLabel>
-              <Select
-                name="category"
-                value={localFilters.category}
-                onChange={handleFilterChange}
-                label="Category"
-              >
-                {categoryOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Tool</InputLabel>
-              <Select
-                name="technology"
-                value={localFilters.technology}
-                onChange={handleFilterChange}
-                label="Tool"
-              >
-                {technologyOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button onClick={resetFilters} sx={{ mr: 1 }} variant="outlined">
-            Reset
-          </Button>
-          <Button onClick={applyFilters} variant="contained">
-            Apply Filters
-          </Button>
-        </Box>
-      </Box>
-
-      {/* Active Filters */}
-      {(localFilters.search || localFilters.status !== 'All' || 
-        localFilters.category !== 'All' || localFilters.technology !== 'All') && (
+        
+        {/* Search Bar */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>Active Filters:</Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            {localFilters.search && (
-              <Chip 
-                label={`Search: ${localFilters.search}`} 
-                onDelete={() => handleFilterChipDelete('search')} 
-              />
-            )}
-            {localFilters.status !== 'All' && (
-              <Chip 
-                label={`Status: ${localFilters.status}`} 
-                onDelete={() => handleFilterChipDelete('status')} 
-              />
-            )}
-            {localFilters.category !== 'All' && (
-              <Chip 
-                label={`Category: ${localFilters.category}`} 
-                onDelete={() => handleFilterChipDelete('category')} 
-              />
-            )}
-            {localFilters.technology !== 'All' && (
-              <Chip 
-                label={`Tool: ${localFilters.technology}`} 
-                onDelete={() => handleFilterChipDelete('technology')} 
-              />
-            )}
-          </Stack>
+          <TextField
+            fullWidth
+            placeholder="Search projects by title or description"
+            variant="outlined"
+            value={localFilters.search}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+              endAdornment: localFilters.search ? (
+                <InputAdornment position="end">
+                  <IconButton 
+                    edge="end" 
+                    onClick={() => {
+                      setLocalFilters(prev => ({ ...prev, search: '' }));
+                      if (contextFilters.search) {
+                        updateFilters({ search: '' });
+                      }
+                    }}
+                  >
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              ) : null
+            }}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleApplyFilters();
+              }
+            }}
+          />
         </Box>
-      )}
-
-      {/* Error Message */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Loading Indicator */}
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : projects.length === 0 ? (
-        <Alert severity="info">
-          No projects found. {' '}
-          <RouterLink to="/create-project" style={{ textDecoration: 'none' }}>
-            Create your first project
-          </RouterLink>
-        </Alert>
-      ) : (
-        <Grid container spacing={3}>
-          {projects.map((project) => (
-            <Grid item key={project._id} xs={12} sm={6} md={4}>
-              <ProjectCard project={project} />
+        
+        {/* Filter Toggle Button (Mobile Only) */}
+        {isMobile && (
+          <Button 
+            fullWidth
+            onClick={toggleFilters}
+            startIcon={<FilterListIcon />}
+            variant="outlined"
+            sx={{ mb: 2 }}
+          >
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </Button>
+        )}
+        
+        {/* Filters Section */}
+        {showFilters && (
+          <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center' }}>
+                <FilterAltIcon sx={{ mr: 1 }} /> Filters
+              </Typography>
+              {isMobile && (
+                <IconButton onClick={toggleFilters} size="small">
+                  <CloseIcon />
+                </IconButton>
+              )}
+            </Box>
+            
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth>
+                  <InputLabel id="category-label">Category</InputLabel>
+                  <Select
+                    labelId="category-label"
+                    id="category"
+                    name="category"
+                    value={localFilters.category}
+                    label="Category"
+                    onChange={handleFilterChange}
+                  >
+                    <MenuItem value="">All Categories</MenuItem>
+                    {categories.map((category) => (
+                      <MenuItem key={category} value={category}>
+                        {category}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth>
+                  <InputLabel id="status-label">Status</InputLabel>
+                  <Select
+                    labelId="status-label"
+                    id="status"
+                    name="status"
+                    value={localFilters.status}
+                    label="Status"
+                    onChange={handleFilterChange}
+                  >
+                    <MenuItem value="">All Statuses</MenuItem>
+                    {statusOptions.map((status) => (
+                      <MenuItem key={status} value={status}>
+                        {status}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth>
+                  <InputLabel id="technology-label">Tool</InputLabel>
+                  <Select
+                    labelId="technology-label"
+                    id="technology"
+                    name="technology"
+                    value={localFilters.technology}
+                    label="Tool"
+                    onChange={handleFilterChange}
+                  >
+                    <MenuItem value="">All Tools</MenuItem>
+                    {toolOptions.map((tool) => (
+                      <MenuItem key={tool} value={tool}>
+                        {tool}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
-          ))}
-        </Grid>
-      )}
+            
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
+              <Button 
+                variant="outlined" 
+                onClick={handleResetFilters}
+                disabled={!hasActiveFilters}
+              >
+                Reset Filters
+              </Button>
+              <Button 
+                variant="contained" 
+                onClick={handleApplyFilters}
+              >
+                Apply Filters
+              </Button>
+            </Box>
+          </Paper>
+        )}
+        
+        {/* Active Filter Chips */}
+        {hasActiveFilters && (
+          <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {renderFilterChips()}
+            {renderFilterChips().length > 1 && (
+              <Chip 
+                label="Clear All Filters" 
+                onClick={handleResetFilters} 
+                color="secondary"
+                size="small"
+              />
+            )}
+          </Box>
+        )}
+        
+        {/* Error and Loading States */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+        
+        {/* Projects Grid */}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            {projects && projects.length > 0 ? (
+              <>
+                <Grid container spacing={3}>
+                  {projects.map((project) => (
+                    <Grid item xs={12} sm={6} md={4} lg={3} key={project._id}>
+                      <ProjectCard project={project} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </>
+            ) : (
+              <Box sx={{ my: 4, textAlign: 'center' }}>
+                {hasActiveFilters ? (
+                  <>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      No projects match your filters
+                    </Typography>
+                    <Button 
+                      variant="outlined" 
+                      onClick={handleResetFilters}
+                      startIcon={<FilterListIcon />}
+                    >
+                      Clear All Filters
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      No projects found
+                    </Typography>
+                    <Button 
+                      variant="contained" 
+                      onClick={handleCreateProject}
+                      startIcon={<AddIcon />}
+                    >
+                      Create Your First Project
+                    </Button>
+                  </>
+                )}
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
     </Container>
   );
 };
