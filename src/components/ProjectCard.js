@@ -89,7 +89,13 @@ const ProjectCard = ({ project }) => {
   const handleLiveSiteClick = (e) => {
     e.stopPropagation();
     if (liveSiteUrl) {
-      window.open(liveSiteUrl, '_blank');
+      // Ensure URL has proper protocol
+      let url = liveSiteUrl;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      console.log('Opening live site URL:', url);
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 

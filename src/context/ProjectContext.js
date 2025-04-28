@@ -35,13 +35,12 @@ export const ProjectProvider = ({ children }) => {
   useEffect(() => {
     console.log('ProjectContext: Authentication state changed', { currentUser, isAuthenticated });
     
-    // Check if we have a token even if isAuthenticated is not yet updated
+    // Improved auth check that handles both login flow and page refreshes
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
-    // If we have both token and user data, we can attempt to fetch projects
-    // This ensures projects are loaded even on a page refresh
-    if ((isAuthenticated && currentUser) || (token && user && user.id)) {
+    // If we have either proper auth state OR a valid token+user combo from localStorage
+    if ((isAuthenticated && currentUser) || (token && (user.id || user._id))) {
       console.log('User is authenticated or token exists, fetching projects');
       // Reset retry counter when auth state changes
       fetchAttempts.current = 0;
