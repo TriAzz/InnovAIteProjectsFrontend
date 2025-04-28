@@ -17,19 +17,21 @@ export const ProjectProvider = ({ children }) => {
     search: ''
   });
   
-  const { token } = useAuth();
+  const { currentUser } = useAuth();
 
   useEffect(() => {
-    if (token) {
+    if (currentUser) {
+      console.log('User authenticated, fetching projects');
       fetchProjects();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, filters]);
+  }, [currentUser, filters]);
 
   // Fetch all projects based on filters
   const fetchProjects = async () => {
     setLoading(true);
     setError('');
+    console.log('Fetching projects with filters:', filters);
 
     try {
       // Convert filters to API query params
@@ -39,13 +41,26 @@ export const ProjectProvider = ({ children }) => {
       if (filters.status) params.status = filters.status;
       if (filters.technology) params.technology = filters.technology;
 
-      const response = await projectServices.getAllProjects(params);
-      setProjects(response.data.data);
-      return response.data.data;
+      // Using getAll instead of getAllProjects to match the method name in api.js
+      console.log('Calling projectServices.getAll with params:', params);
+      const response = await projectServices.getAll(params);
+      console.log('API response:', response);
+      
+      if (response && response.data) {
+        // Check the structure of the response data
+        console.log('Response data structure:', response.data);
+        const projectsData = response.data.data || response.data;
+        setProjects(projectsData);
+        return projectsData;
+      } else {
+        console.error('Invalid response format:', response);
+        setProjects([]);
+        return [];
+      }
     } catch (err) {
+      console.error('Error fetching projects:', err);
       const message = err.response?.data?.message || 'Failed to fetch projects';
       setError(message);
-      console.error(message);
       return [];
     } finally {
       setLoading(false);
@@ -58,8 +73,8 @@ export const ProjectProvider = ({ children }) => {
     setError('');
 
     try {
-      const response = await projectServices.getProject(id);
-      return response.data.data;
+      const response = await projectServices.getById(id);
+      return response.data.data || response.data;
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to fetch project';
       setError(message);
@@ -73,12 +88,16 @@ export const ProjectProvider = ({ children }) => {
   const addProject = async (projectData) => {
     setLoading(true);
     setError('');
+    console.log('Creating new project with data:', projectData);
 
     try {
-      const response = await projectServices.createProject(projectData);
-      setProjects([...projects, response.data.data]);
-      return response.data.data;
+      const response = await projectServices.create(projectData);
+      console.log('Create project response:', response);
+      const newProject = response.data.data || response.data;
+      setProjects([...projects, newProject]);
+      return newProject;
     } catch (err) {
+      console.error('Error creating project:', err);
       const message = err.response?.data?.message || 'Failed to create project';
       setError(message);
       throw new Error(message);
@@ -152,6 +171,7 @@ export const ProjectProvider = ({ children }) => {
 
   // Update filter parameters
   const updateFilters = (newFilters) => {
+    console.log('Updating filters to:', newFilters);
     setFilters(prevFilters => ({
       ...prevFilters,
       ...newFilters

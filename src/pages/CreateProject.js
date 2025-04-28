@@ -297,7 +297,7 @@ const CreateProject = () => {
                   label="Deadline (Optional)"
                   value={formData.deadline}
                   onChange={handleDateChange}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
+                  slotProps={{ textField: { fullWidth: true } }}
                 />
               </LocalizationProvider>
             </Grid>
