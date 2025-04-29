@@ -43,14 +43,14 @@ const toolOptions = ['Bolt', 'v0 (Vercel)', 'Cursor', 'Replit', 'Lovable', 'Wind
 const Dashboard = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const {
-    projects,
-    loading,
+  const { 
+    projects, 
+    loading, 
     error,
     filters: contextFilters,
-    updateFilters,
-    clearFilters,
-    fetchProjects
+    updateFilters, 
+    clearFilters, 
+    fetchProjects 
   } = useProjects();
 
   // Local filter state (UI state)
@@ -60,37 +60,34 @@ const Dashboard = () => {
     status: '',
     technology: ''
   });
-
+  
   // State for filter panel visibility on mobile
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [showFilters, setShowFilters] = useState(!isMobile);
-
+  
   // Track if any filter is active
   const hasActiveFilters = Object.values(localFilters).some(value => value !== '');
 
   // Execute full reset filters behavior (clear filters + load all projects) on component mount
   useEffect(() => {
-    // Only proceed if we have authentication
-    if (currentUser) {
-      // Clear filters in context
-      clearFilters();
-
-      // Reset local filter state
-      setLocalFilters({
-        search: '',
-        category: '',
-        status: '',
-        technology: ''
-      });
-
-      // Fetch all projects with a force refresh to ensure latest data
-      fetchProjects(true);
-
-      // Log that we've performed this action
-      console.log('Dashboard: Auto-reset filters and fetched all projects on mount');
-    }
-  }, [currentUser, clearFilters, fetchProjects]); // Re-run when authentication changes
+    // Clear filters in context
+    clearFilters();
+    
+    // Reset local filter state
+    setLocalFilters({
+      search: '',
+      category: '',
+      status: '',
+      technology: ''
+    });
+    
+    // Fetch all projects with a force refresh to ensure latest data
+    fetchProjects(true);
+    
+    // Log that we've performed this action
+    console.log('Dashboard: Auto-reset filters and fetched all projects on mount');
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   // Initialize local filters from context
   useEffect(() => {
@@ -154,59 +151,59 @@ const Dashboard = () => {
   // Render active filter chips for visual feedback
   const renderFilterChips = () => {
     const chips = [];
-
+    
     if (localFilters.search) {
       chips.push(
-        <Chip
-          key="search"
+        <Chip 
+          key="search" 
           label={`Search: ${localFilters.search}`}
-          onDelete={() => handleRemoveFilter('search')}
-          color="primary"
+          onDelete={() => handleRemoveFilter('search')} 
+          color="primary" 
           variant="outlined"
           size="small"
         />
       );
     }
-
+    
     if (localFilters.category) {
       chips.push(
-        <Chip
-          key="category"
+        <Chip 
+          key="category" 
           label={`Category: ${localFilters.category}`}
-          onDelete={() => handleRemoveFilter('category')}
-          color="primary"
+          onDelete={() => handleRemoveFilter('category')} 
+          color="primary" 
           variant="outlined"
           size="small"
         />
       );
     }
-
+    
     if (localFilters.status) {
       chips.push(
-        <Chip
-          key="status"
+        <Chip 
+          key="status" 
           label={`Status: ${localFilters.status}`}
-          onDelete={() => handleRemoveFilter('status')}
-          color="primary"
+          onDelete={() => handleRemoveFilter('status')} 
+          color="primary" 
           variant="outlined"
           size="small"
         />
       );
     }
-
+    
     if (localFilters.technology) {
       chips.push(
-        <Chip
-          key="technology"
+        <Chip 
+          key="technology" 
           label={`Tool: ${localFilters.technology}`}
-          onDelete={() => handleRemoveFilter('technology')}
-          color="primary"
+          onDelete={() => handleRemoveFilter('technology')} 
+          color="primary" 
           variant="outlined"
           size="small"
         />
       );
     }
-
+    
     return chips;
   };
 
@@ -232,7 +229,7 @@ const Dashboard = () => {
             </Button>
           </Box>
         </Box>
-
+        
         {/* Search Bar */}
         <Box sx={{ mb: 3 }}>
           <TextField
@@ -249,8 +246,8 @@ const Dashboard = () => {
               ),
               endAdornment: localFilters.search ? (
                 <InputAdornment position="end">
-                  <IconButton
-                    edge="end"
+                  <IconButton 
+                    edge="end" 
                     onClick={() => {
                       setLocalFilters(prev => ({ ...prev, search: '' }));
                       if (contextFilters.search) {
@@ -270,10 +267,10 @@ const Dashboard = () => {
             }}
           />
         </Box>
-
+        
         {/* Filter Toggle Button (Mobile Only) */}
         {isMobile && (
-          <Button
+          <Button 
             fullWidth
             onClick={toggleFilters}
             startIcon={<FilterListIcon />}
@@ -283,7 +280,7 @@ const Dashboard = () => {
             {showFilters ? 'Hide Filters' : 'Show Filters'}
           </Button>
         )}
-
+        
         {/* Filters Section */}
         {showFilters && (
           <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
@@ -297,7 +294,7 @@ const Dashboard = () => {
                 </IconButton>
               )}
             </Box>
-
+            
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>
                 <FormControl fullWidth>
@@ -319,7 +316,7 @@ const Dashboard = () => {
                   </Select>
                 </FormControl>
               </Grid>
-
+              
               <Grid item xs={12} sm={4}>
                 <FormControl fullWidth>
                   <InputLabel id="status-label">Status</InputLabel>
@@ -340,7 +337,7 @@ const Dashboard = () => {
                   </Select>
                 </FormControl>
               </Grid>
-
+              
               <Grid item xs={12} sm={4}>
                 <FormControl fullWidth>
                   <InputLabel id="technology-label">Tool</InputLabel>
@@ -362,17 +359,17 @@ const Dashboard = () => {
                 </FormControl>
               </Grid>
             </Grid>
-
+            
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
-              <Button
-                variant="outlined"
+              <Button 
+                variant="outlined" 
                 onClick={handleResetFilters}
                 disabled={!hasActiveFilters}
               >
                 Reset Filters
               </Button>
-              <Button
-                variant="contained"
+              <Button 
+                variant="contained" 
                 onClick={handleApplyFilters}
               >
                 Apply Filters
@@ -380,43 +377,35 @@ const Dashboard = () => {
             </Box>
           </Paper>
         )}
-
+        
         {/* Active Filter Chips */}
         {hasActiveFilters && (
           <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {renderFilterChips()}
             {renderFilterChips().length > 1 && (
-              <Chip
-                label="Clear All Filters"
-                onClick={handleResetFilters}
+              <Chip 
+                label="Clear All Filters" 
+                onClick={handleResetFilters} 
                 color="secondary"
                 size="small"
               />
             )}
           </Box>
         )}
-
-        {/* Error State */}
+        
+        {/* Error and Loading States */}
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
-            {projects && projects.length > 0 && (
-              <Box sx={{ mt: 1 }}>
-                Showing previously loaded projects. Refresh to try again.
-              </Box>
-            )}
           </Alert>
         )}
-
-        {/* Loading State */}
-        {loading && (
+        
+        {/* Projects Grid */}
+        {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress />
           </Box>
-        )}
-
-        {/* Projects Grid */}
-        {!loading && (
+        ) : (
           <>
             {projects && projects.length > 0 ? (
               <>
@@ -435,8 +424,8 @@ const Dashboard = () => {
                     <Typography variant="h6" sx={{ mb: 2 }}>
                       No projects match your filters
                     </Typography>
-                    <Button
-                      variant="outlined"
+                    <Button 
+                      variant="outlined" 
                       onClick={handleResetFilters}
                       startIcon={<FilterListIcon />}
                     >
@@ -448,8 +437,8 @@ const Dashboard = () => {
                     <Typography variant="h6" sx={{ mb: 2 }}>
                       No projects found
                     </Typography>
-                    <Button
-                      variant="contained"
+                    <Button 
+                      variant="contained" 
                       onClick={handleCreateProject}
                       startIcon={<AddIcon />}
                     >
