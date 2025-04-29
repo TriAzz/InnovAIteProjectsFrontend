@@ -44,24 +44,18 @@ export const ProjectProvider = ({ children }) => {
       console.log('Token and user found in localStorage, fetching projects');
       fetchAttempts.current = 0;
       // ALWAYS force a refresh on mount or auth changes to prevent blank dashboard
-      // Add a small delay to ensure token is properly set in interceptors
-      setTimeout(() => {
-        fetchProjects(true);
-      }, 100);
+      fetchProjects(true);
     } else if (isAuthenticated && currentUser) {
       console.log('User is authenticated via context, fetching projects');
       fetchAttempts.current = 0;
-      // Add a small delay to ensure token is properly set in interceptors
-      setTimeout(() => {
-        fetchProjects(true);
-      }, 100);
+      fetchProjects(true);
     } else {
       console.log('No authentication found, clearing projects');
       setProjects([]);
       clearCache();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, isAuthenticated]);
+  }, [isAuthenticated]);
 
   // Stabilize filter values using a ref to prevent unnecessary refreshes
   const filtersRef = useRef(filters);
@@ -95,7 +89,6 @@ export const ProjectProvider = ({ children }) => {
 
   // Fetch all projects based on filters
   const fetchProjects = useCallback(async (forceRefresh = false) => {
-    console.log('fetchProjects called with forceRefresh:', forceRefresh);
     // Check if we have a token even if isAuthenticated is not yet updated
     const token = localStorage.getItem('token');
 
@@ -123,8 +116,6 @@ export const ProjectProvider = ({ children }) => {
         params._t = Date.now();
         // Since this is a forced refresh, we should clear any cached projects first
         console.log('Force refresh requested, clearing cached projects');
-        // Clear the project cache to ensure fresh data
-        clearCache();
       }
 
       console.log('Calling projectServices.getAll with params:', params);
@@ -176,8 +167,15 @@ export const ProjectProvider = ({ children }) => {
         return [];
       }
 
-      const message = err.response?.data?.message || 'Failed to fetch projects';
-      setError(message);
+      // Check if it's a network error (likely API server is down or unreachable)
+      if (err.message === 'Network Error') {
+        setError('Cannot connect to server. Please check your internet connection or try again later.');
+      } else {
+        const message = err.response?.data?.message || 'Failed to fetch projects';
+        setError(message);
+      }
+
+      // Return empty array but keep any cached projects in state
       return [];
     } finally {
       setLoading(false);

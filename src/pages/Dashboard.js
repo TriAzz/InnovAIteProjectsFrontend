@@ -71,10 +71,8 @@ const Dashboard = () => {
 
   // Execute full reset filters behavior (clear filters + load all projects) on component mount
   useEffect(() => {
-    // Only proceed if we have a currentUser (authenticated)
-    if (currentUser && currentUser._id) {
-      console.log('Dashboard: User authenticated, resetting filters and fetching projects');
-
+    // Only proceed if we have authentication
+    if (currentUser) {
       // Clear filters in context
       clearFilters();
 
@@ -87,13 +85,10 @@ const Dashboard = () => {
       });
 
       // Fetch all projects with a force refresh to ensure latest data
-      // Add a small delay to ensure auth token is properly set
-      setTimeout(() => {
-        console.log('Dashboard: Executing fetchProjects with force refresh');
-        fetchProjects(true);
-      }, 100);
-    } else {
-      console.log('Dashboard: No authenticated user yet, skipping project fetch');
+      fetchProjects(true);
+
+      // Log that we've performed this action
+      console.log('Dashboard: Auto-reset filters and fetched all projects on mount');
     }
   }, [currentUser, clearFilters, fetchProjects]); // Re-run when authentication changes
 
@@ -153,15 +148,8 @@ const Dashboard = () => {
 
   // Refresh projects list
   const handleRefresh = useCallback(() => {
-    console.log('Dashboard: Manual refresh requested');
-    // Clear any existing error
-    if (error) {
-      console.log('Dashboard: Clearing previous error before refresh');
-    }
-
-    // Force a refresh of projects data
-    fetchProjects(true);
-  }, [fetchProjects, error]);
+    fetchProjects(true); // true forces a refresh
+  }, [fetchProjects]);
 
   // Render active filter chips for visual feedback
   const renderFilterChips = () => {
@@ -408,19 +396,27 @@ const Dashboard = () => {
           </Box>
         )}
 
-        {/* Error and Loading States */}
+        {/* Error State */}
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
+            {projects && projects.length > 0 && (
+              <Box sx={{ mt: 1 }}>
+                Showing previously loaded projects. Refresh to try again.
+              </Box>
+            )}
           </Alert>
         )}
 
-        {/* Projects Grid */}
-        {loading ? (
+        {/* Loading State */}
+        {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress />
           </Box>
-        ) : (
+        )}
+
+        {/* Projects Grid */}
+        {!loading && (
           <>
             {projects && projects.length > 0 ? (
               <>
