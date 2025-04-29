@@ -1,5 +1,6 @@
-# Getting Started with Create React App
+# InnovAIteProjects
 
+*This project was created in large part using GitHub Copilot and Windsurf as part of the Deakin InnovAIte initiative investigating AI tools.*
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
