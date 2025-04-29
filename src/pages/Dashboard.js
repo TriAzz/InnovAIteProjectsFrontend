@@ -306,13 +306,6 @@ const Dashboard = () => {
                     value={localFilters.category}
                     label="Category"
                     onChange={handleFilterChange}
-                    displayEmpty
-                    renderValue={(selected) => {
-                      if (selected === '') {
-                        return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>All Categories</span>;
-                      }
-                      return selected;
-                    }}
                   >
                     <MenuItem value="">All Categories</MenuItem>
                     {categories.map((category) => (
@@ -334,13 +327,6 @@ const Dashboard = () => {
                     value={localFilters.status}
                     label="Status"
                     onChange={handleFilterChange}
-                    displayEmpty
-                    renderValue={(selected) => {
-                      if (selected === '') {
-                        return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>All Statuses</span>;
-                      }
-                      return selected;
-                    }}
                   >
                     <MenuItem value="">All Statuses</MenuItem>
                     {statusOptions.map((status) => (
@@ -362,13 +348,6 @@ const Dashboard = () => {
                     value={localFilters.technology}
                     label="Tool"
                     onChange={handleFilterChange}
-                    displayEmpty
-                    renderValue={(selected) => {
-                      if (selected === '') {
-                        return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>All Tools</span>;
-                      }
-                      return selected;
-                    }}
                   >
                     <MenuItem value="">All Tools</MenuItem>
                     {toolOptions.map((tool) => (
