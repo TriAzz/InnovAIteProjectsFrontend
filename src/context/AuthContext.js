@@ -37,6 +37,33 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
 
+      // Ensure all required fields are present
+      if (!userData.name || !userData.email || !userData.password) {
+        const missingFields = [];
+        if (!userData.name) missingFields.push('name');
+        if (!userData.email) missingFields.push('email');
+        if (!userData.password) missingFields.push('password');
+
+        const errorMsg = `Missing required fields: ${missingFields.join(', ')}`;
+        console.error('[AuthContext] Registration validation error:', errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(userData.email)) {
+        const errorMsg = 'Invalid email format';
+        console.error('[AuthContext] Registration validation error:', errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Validate password length
+      if (userData.password.length < 6) {
+        const errorMsg = 'Password must be at least 6 characters';
+        console.error('[AuthContext] Registration validation error:', errorMsg);
+        throw new Error(errorMsg);
+      }
+
       const response = await authServices.register(userData);
       console.log('[AuthContext] Registration response:', response);
 
@@ -55,7 +82,7 @@ export const AuthProvider = ({ children }) => {
       return user;
     } catch (err) {
       console.error('[AuthContext] Registration error:', err);
-      const message = err.response?.data?.message || 'Registration failed';
+      const message = err.response?.data?.message || err.message || 'Registration failed';
       setError(message);
       throw new Error(message);
     } finally {
@@ -73,6 +100,25 @@ export const AuthProvider = ({ children }) => {
       // Clear any existing auth data before login
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+
+      // Validate email and password
+      if (!email || !password) {
+        const missingFields = [];
+        if (!email) missingFields.push('email');
+        if (!password) missingFields.push('password');
+
+        const errorMsg = `Missing required fields: ${missingFields.join(', ')}`;
+        console.error('[AuthContext] Login validation error:', errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        const errorMsg = 'Invalid email format';
+        console.error('[AuthContext] Login validation error:', errorMsg);
+        throw new Error(errorMsg);
+      }
 
       const response = await authServices.login({ email, password });
       console.log('[AuthContext] Login response:', response);
@@ -92,7 +138,7 @@ export const AuthProvider = ({ children }) => {
       return user;
     } catch (err) {
       console.error('[AuthContext] Login error:', err);
-      const message = err.response?.data?.message || 'Invalid credentials';
+      const message = err.response?.data?.message || err.message || 'Invalid credentials';
       setError(message);
       throw new Error(message);
     } finally {

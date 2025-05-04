@@ -13,67 +13,16 @@ const api = axios.create({
   withCredentials: true, // Important for CORS with credentials
 });
 
-// Track if we're currently trying to refresh authentication
-let isRefreshingAuth = false;
-// Queue of requests waiting for token refresh
-let refreshSubscribers = [];
-
-// Execute queued requests after token refresh
-const onTokenRefreshed = (token) => {
-  refreshSubscribers.forEach(callback => callback(token));
-  refreshSubscribers = [];
-};
-
-// Add to queue of requests waiting for token refresh
-const addRefreshSubscriber = (callback) => {
-  refreshSubscribers.push(callback);
-};
-
-// Attempt to silently refresh auth if needed
-const refreshAuthIfNeeded = async () => {
-  // Prevent multiple simultaneous refresh attempts
-  if (isRefreshingAuth) {
-    return new Promise((resolve) => {
-      addRefreshSubscriber(token => {
-        resolve(token);
-      });
-    });
-  }
-
-  // Get user from local storage
-  const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('token');
-
-  // If we have user but no token, try to refresh silently
-  if (user && !token) {
-    isRefreshingAuth = true;
-    try {
-      console.log('[API] Attempting to silently refresh authentication');
-      const response = await authServices.getProfile();
-      if (response && response.data) {
-        console.log('[API] Successfully refreshed authentication');
-        // Token should be renewed by the interceptor
-        isRefreshingAuth = false;
-        onTokenRefreshed(localStorage.getItem('token'));
-        return localStorage.getItem('token');
-      }
-    } catch (error) {
-      console.error('[API] Failed to refresh authentication:', error);
-      // Clear user data if refresh failed
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-    }
-    isRefreshingAuth = false;
-  }
-
-  return token;
+// Simple function to get the current token
+const getToken = () => {
+  return localStorage.getItem('token');
 };
 
 // Add a request interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
     // Always try to get the most up-to-date token
-    const token = localStorage.getItem('token');
+    const token = getToken();
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -134,8 +83,14 @@ api.interceptors.response.use(
 
 // Authentication services
 export const authServices = {
-  register: (userData) => api.post('/auth/register', userData),
-  login: (credentials) => api.post('/auth/login', credentials),
+  register: (userData) => {
+    console.log('[API] Sending registration request with data:', userData);
+    return api.post('/auth/register', userData);
+  },
+  login: (credentials) => {
+    console.log('[API] Sending login request with credentials:', { email: credentials.email, passwordLength: credentials.password?.length });
+    return api.post('/auth/login', credentials);
+  },
   getProfile: () => api.get('/auth/me'),
   updateProfile: (userData) => api.put('/auth/update', userData),
   updatePassword: (passwordData) => api.put('/auth/update-password', passwordData),
