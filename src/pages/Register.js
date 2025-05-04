@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { 
+import {
   Avatar,
   Button,
   TextField,
@@ -23,7 +23,7 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -37,36 +37,45 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     setError('');
-    
+
     // Validate form fields
     if (!formData.name.trim()) {
       return setError('Name is required');
     }
-    
+
     if (!formData.email.trim()) {
       return setError('Email is required');
     }
-    
+
     if (formData.password.length < 6) {
       return setError('Password must be at least 6 characters');
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       return setError('Passwords do not match');
     }
-    
+
     setLoading(true);
-    
+
     try {
-      await register({
+      console.log('[Register] Attempting registration with email:', formData.email);
+      const userData = {
         name: formData.name,
         email: formData.email,
         password: formData.password
-      });
-      navigate('/');
+      };
+
+      const user = await register(userData);
+      console.log('[Register] Registration successful, user:', user);
+
+      // Force a small delay to ensure state is updated
+      setTimeout(() => {
+        navigate('/');
+      }, 100);
     } catch (err) {
+      console.error('[Register] Registration error:', err);
       setError(err.message || 'Failed to register');
       setLoading(false);
     }
@@ -88,9 +97,9 @@ const Register = () => {
         <Typography component="h1" variant="h5">
           Sign up
         </Typography>
-        
+
         {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
-        
+
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12}>

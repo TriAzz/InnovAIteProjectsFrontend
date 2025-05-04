@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
-import { 
+import {
   Avatar,
   Button,
   TextField,
@@ -21,11 +21,11 @@ const Login = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Get redirect path from location state or default to dashboard
   const from = location.state?.from?.pathname || '/';
 
@@ -39,14 +39,22 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     setError('');
     setLoading(true);
-    
+
     try {
-      await login(formData.email, formData.password);
-      navigate(from, { replace: true });
+      console.log('[Login] Attempting login with email:', formData.email);
+      const user = await login(formData.email, formData.password);
+      console.log('[Login] Login successful, user:', user);
+      console.log('[Login] Navigating to:', from);
+
+      // Force a small delay to ensure state is updated
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 100);
     } catch (err) {
+      console.error('[Login] Login error:', err);
       setError(err.message || 'Failed to login');
       setLoading(false);
     }
@@ -68,9 +76,9 @@ const Login = () => {
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>
-        
+
         {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
-        
+
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
           <TextField
             margin="normal"

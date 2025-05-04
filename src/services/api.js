@@ -10,6 +10,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for CORS with credentials
 });
 
 // Track if we're currently trying to refresh authentication
@@ -38,11 +39,11 @@ const refreshAuthIfNeeded = async () => {
       });
     });
   }
-  
+
   // Get user from local storage
   const user = JSON.parse(localStorage.getItem('user'));
   const token = localStorage.getItem('token');
-  
+
   // If we have user but no token, try to refresh silently
   if (user && !token) {
     isRefreshingAuth = true;
@@ -64,7 +65,7 @@ const refreshAuthIfNeeded = async () => {
     }
     isRefreshingAuth = false;
   }
-  
+
   return token;
 };
 
@@ -72,20 +73,20 @@ const refreshAuthIfNeeded = async () => {
 api.interceptors.request.use(
   async (config) => {
     // Always try to get the most up-to-date token
-    const token = await refreshAuthIfNeeded();
-    
+    const token = localStorage.getItem('token');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log(`[API] Request to ${config.url} - Auth token attached`);
     } else {
       console.log(`[API] Request to ${config.url} - No auth token available`);
-      
+
       // Check if we should be authenticated but aren't
       const user = JSON.parse(localStorage.getItem('user'));
-      if (user && !token && !config.url.includes('/auth/login')) {
+      if (user && !token && !config.url.includes('/auth/login') && !config.url.includes('/auth/register')) {
         console.warn('[API] User exists but token is missing, redirecting to login');
         localStorage.removeItem('user');
-        if (window.location.pathname !== '/login') {
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
           window.location.href = '/login';
         }
         return Promise.reject(new Error('Authentication required'));
@@ -114,15 +115,19 @@ api.interceptors.response.use(
       status: error.response?.status,
       message: error.response?.data?.message || error.message
     });
-    
+
     // Handle session expiration
     if (error.response && error.response.status === 401) {
       console.log('[API] 401 Unauthorized - Clearing user session');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+
+      // Only redirect to login if we're not already on the login or register page
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
     }
-    
+
     return Promise.reject(error);
   }
 );
