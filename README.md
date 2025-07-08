@@ -1,49 +1,113 @@
-# Getting Started with Create React App
+# InnovAIte Projects Dashboard - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React frontend for the InnovAIte Projects Dashboard application.
+
+## Features
+
+- **Project Management**: Browse, create, and manage projects
+- **User Authentication**: Login/registration with session management
+- **Project Details**: View project information with comments
+- **Comment System**: Add comments to projects (automatically approved)
+- **Responsive Design**: Mobile-friendly interface with Bootstrap
+- **Search & Filter**: Find projects by various criteria
+
+## Tech Stack
+
+- **React 18**: Frontend framework
+- **Bootstrap 5**: CSS framework
+- **Axios**: HTTP client
+- **React Router**: Navigation
+- **Context API**: State management
+
+## Environment Variables
+
+Create a `.env` file in the root directory:
+
+```
+REACT_APP_API_URL=https://your-backend-url.onrender.com/api
+```
+
+For local development:
+```
+REACT_APP_API_URL=http://localhost:5295/api
+```
+
+## Deployment
+
+This application is configured for deployment to Netlify:
+
+1. Connect your GitHub repository to Netlify
+2. Set the build command: `npm run build`
+3. Set the publish directory: `build`
+4. Add environment variables in Netlify dashboard
+
+## Local Development
+
+```bash
+npm install
+npm start
+```
+
+The app will be available at `http://localhost:3000`.
+
+## Build for Production
+
+```bash
+npm run build
+```
 
 ## Available Scripts
 
-In the project directory, you can run:
+- `npm start` - Start development server
+- `npm run build` - Build for production
+- `npm test` - Run tests
+- `npm run eject` - Eject from Create React App
 
-### `npm start`
+## Pages
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Home**: Landing page with application overview
+- **Projects**: Browse all projects with search and filtering
+- **Project Details**: View individual project with comments
+- **Create Project**: Add new project (authenticated users only)
+- **Login/Register**: User authentication
+- **Profile**: User profile management
+- **Admin Setup**: Initial admin user creation
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Authentication
 
-### `npm test`
+The application uses Basic Authentication with the backend API. User credentials are stored in localStorage and automatically included in API requests.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Project Structure
 
-### `npm run build`
+```
+src/
+├── components/          # React components
+│   ├── Header.js       # Navigation header
+│   ├── Footer.js       # Footer component
+│   ├── Home.js         # Landing page
+│   ├── ProjectList.js  # Projects grid view
+│   ├── ProjectDetail.js # Individual project view
+│   ├── CreateProject.js # Project creation form
+│   ├── Login.js        # Login form
+│   ├── Register.js     # Registration form
+│   └── Profile.js      # User profile
+├── context/            # React context providers
+│   └── AuthContext.js  # Authentication context
+├── services/           # API services
+│   └── api.js          # Axios API client
+├── styles/             # CSS stylesheets
+└── utils/              # Utility functions
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## API Integration
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The frontend communicates with the backend API for:
+- User authentication and registration
+- Project CRUD operations
+- Comment management
+- User profile management
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+All API calls are made through the centralized `api.js` service with automatic authentication headers.
 
 ### Code Splitting
 
