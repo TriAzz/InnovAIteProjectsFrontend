@@ -9,4 +9,3 @@
 
 [build.environment]
   CI = "false"
-  REACT_APP_API_URL = "https://innovaiteprojectsbackend.onrender.com/api"
