@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import apiClient from '../services/api';
 
 const AuthContext = createContext();
 
@@ -26,25 +27,22 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const credentials = btoa(`${email}:${password}`);
-      const response = await fetch('http://localhost:5295/api/users/me', {
-        method: 'GET',
+      
+      // Use the configured apiClient which is already set up with the correct backend URL
+      const userData = await apiClient.get('/users/me', {
         headers: {
-          'Authorization': `Basic ${credentials}`,
-          'Content-Type': 'application/json',
-        },
+          'Authorization': `Basic ${credentials}`
+        }
       });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('authCredentials', credentials);
-        return { success: true };
-      } else {
-        return { success: false, error: 'Invalid credentials' };
-      }
+      
+      // If we get here, the request was successful
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('authCredentials', credentials);
+      return { success: true };
     } catch (error) {
-      return { success: false, error: 'Network error' };
+      console.error('Login error:', error);
+      return { success: false, error: 'Invalid credentials' };
     }
   };
 
@@ -56,29 +54,20 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await fetch('http://localhost:5295/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: userData.email,
-          passwordHash: userData.password,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          description: userData.description,
-          role: 'User'
-        }),
+      // Use the configured apiClient instead of fetch
+      await apiClient.post('/users', {
+        email: userData.email,
+        passwordHash: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        description: userData.description,
+        role: 'User'
       });
-
-      if (response.ok) {
-        return { success: true };
-      } else {
-        const errorData = await response.json();
-        return { success: false, error: errorData.message || 'Registration failed' };
-      }
+      
+      return { success: true };
     } catch (error) {
-      return { success: false, error: 'Network error' };
+      console.error('Registration error:', error);
+      return { success: false, error: error.message || 'Network error' };
     }
   };
 

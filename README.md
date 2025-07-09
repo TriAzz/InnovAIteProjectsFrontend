@@ -27,9 +27,10 @@ Create a `.env` file in the root directory:
 REACT_APP_API_URL=https://your-backend-url.onrender.com/api
 ```
 
-For local development:
+For production:
 ```
-REACT_APP_API_URL=http://localhost:5295/api
+REACT_APP_API_URL=https://innovaiteprojectsbackend.onrender.com/api
+CI=false
 ```
 
 ## Deployment
