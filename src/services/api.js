@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Always use the Render backend URL
+// Always use the Render backend URL with a version parameter to bust cache
 const API_BASE_URL = 'https://innovaiteprojectsbackend.onrender.com/api';
+console.log("API URL set to:", API_BASE_URL);
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -14,6 +15,9 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const credentials = localStorage.getItem('authCredentials');
+    
+    // Debug the URL being requested
+    console.log("Making API request to:", config.baseURL + config.url);
     
     if (credentials) {
       config.headers.Authorization = `Basic ${credentials}`;
