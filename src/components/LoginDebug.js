@@ -22,20 +22,90 @@ const LoginDebug = () => {
       
       // Test connection to API
       if (action === 'testApi') {
-        response = await axios.get(`${apiUrl}/health`);
-        setResult(response.data);
+        // Try multiple health endpoints
+        const results = {};
+        
+        try {
+          // Try the simple health endpoint that doesn't require DB connection
+          const simpleResponse = await axios.get(`${apiUrl.replace('/api', '')}/health`);
+          results.simpleHealth = simpleResponse.data;
+        } catch (error) {
+          results.simpleHealthError = error.message;
+        }
+        
+        try {
+          // Try the public setup health endpoint
+          const publicSetupResponse = await axios.get(`${apiUrl.replace('/api', '')}/api/public-setup/health`);
+          results.publicSetupHealth = publicSetupResponse.data;
+        } catch (error) {
+          results.publicSetupHealthError = error.message;
+        }
+        
+        try {
+          // Try the main API health endpoint
+          const apiHealthResponse = await axios.get(`${apiUrl}/health`);
+          results.apiHealth = apiHealthResponse.data;
+        } catch (error) {
+          results.apiHealthError = error.message;
+        }
+        
+        setResult({
+          message: "Health check results",
+          ...results
+        });
       }
       
       // Create admin user
       else if (action === 'createAdmin') {
-        response = await axios.post(`${apiUrl}/users/setup-admin`, {
-          email,
-          password,
-          firstName: 'Admin',
-          lastName: 'User',
-          description: 'Created for debugging'
-        });
-        setResult(response.data);
+        try {
+          // Try setup-admin endpoint first
+          response = await axios.post(`${apiUrl}/users/setup-admin`, {
+            email,
+            password,
+            firstName: 'Admin',
+            lastName: 'User',
+            description: 'Created for debugging'
+          });
+          setResult({
+            adminCreationMethod: "setup-admin endpoint",
+            response: response.data
+          });
+        } catch (setupError) {
+          // If that fails, try the setup controller endpoint
+          try {
+            response = await axios.post(`${apiUrl}/setup/first-admin`, {
+              email,
+              password,
+              firstName: 'Admin',
+              lastName: 'User',
+              description: 'Created for debugging'
+            });
+            setResult({
+              adminCreationMethod: "setup/first-admin endpoint",
+              response: response.data
+            });
+          } catch (setupControllerError) {
+            // If that fails, try the new public setup endpoint
+            try {
+              response = await axios.post(`${apiUrl.replace('/api', '')}/api/public-setup/first-admin`, {
+                email,
+                password,
+                firstName: 'Admin',
+                lastName: 'User',
+                description: 'Created for debugging'
+              });
+              setResult({
+                adminCreationMethod: "public-setup/first-admin endpoint",
+                response: response.data
+              });
+            } catch (publicSetupError) {
+              throw new Error(`All admin creation methods failed. Errors: 
+                1. Setup-admin: ${setupError.message}
+                2. Setup/first-admin: ${setupControllerError.message}
+                3. Public-setup/first-admin: ${publicSetupError.message}`);
+            }
+          }
+        }
       }
       
       // Test login
@@ -50,10 +120,18 @@ const LoginDebug = () => {
       }
       
     } catch (err) {
-      setError(`Error: ${err.response?.status} ${err.response?.statusText} - ${err.message}`);
+      const errorDetails = {
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        url: err.response?.config?.url
+      };
+      
+      setError(`Error: ${err.response?.status || 'Network'} ${err.response?.statusText || ''} - ${err.message}`);
       if (err.response?.data) {
-        setResult(err.response.data);
+        errorDetails.responseData = err.response.data;
       }
+      setResult(errorDetails);
     } finally {
       setLoading(false);
     }
