@@ -13,6 +13,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Profile from './components/Profile';
 import AdminSetup from './components/AdminSetup';
+import LoginDebug from './components/LoginDebug';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/admin-setup" element={<AdminSetup />} />
+              <Route path="/debug-login" element={<LoginDebug />} />
             </Routes>
           </main>
           <Footer />
